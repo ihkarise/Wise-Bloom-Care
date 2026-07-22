@@ -36,8 +36,9 @@ Sheet-as-table layout, key/index strategy, and adapter-enforced integrity for v1
 | `families` | family record graph root | `family_id` (PK), created_at, owner_user_id |
 | `users` | auth identities | `user_id` (PK), email(hash), role, status |
 | `sessions` | session tokens | `session_id`, user_id, expires_at |
-| `maternal_records` | mother node | `maternal_id` (PK), family_id (FK), lmp, edd, profile… |
-| `child_records` | child node | `child_id` (PK), family_id (FK), **mother_id (FK, immutable)**, dob, sex… |
+| `maternal_records` | mother node | `maternal_id` (PK), family_id (FK), profile… |
+| `pregnancy_episodes` | one pregnancy of a mother | `episode_id` (PK), maternal_id (FK), lmp, edd, pre_pregnancy_bmi_cat, parity, status/outcome |
+| `child_records` | child node | `child_id` (PK), family_id (FK), **mother_id (FK, immutable)**, episode_id (FK), dob, sex… |
 | `events` (append-only) | timeline | `event_id` (PK), family_id, subject_id, type, life_stage, occurred_at, payload_ref, version, created_by |
 | `vitals` | BP/weight/blood sugar | `vital_id`, subject_id, type, value, unit, context, measured_at |
 | `appointments` | appts | `appt_id`, family_id, subject_id, when, status |

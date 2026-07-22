@@ -36,6 +36,29 @@ System ──1:*── AuditRecord
 ContentItem, ScheduleEntry : reference data (unscoped)
 ```
 
+### 3.1 ER Diagram (mermaid)
+
+```mermaid
+erDiagram
+    USER ||--o{ SESSION : has
+    USER ||--o{ CAREGIVER_ACCESS : granted
+    FAMILY ||--o{ CAREGIVER_ACCESS : scoped_to
+    FAMILY ||--|{ MATERNAL_RECORD : contains
+    FAMILY ||--o{ CHILD_RECORD : contains
+    MATERNAL_RECORD ||--o{ PREGNANCY_EPISODE : has
+    PREGNANCY_EPISODE ||--o{ CHILD_RECORD : "results in (0..*)"
+    MATERNAL_RECORD ||--o{ CHILD_RECORD : "mother (immutable)"
+    FAMILY ||--o{ EVENT : timeline
+    MATERNAL_RECORD ||--o{ VITAL : records
+    CHILD_RECORD ||--o{ GROWTH_MEASUREMENT : records
+    CHILD_RECORD ||--o{ MILESTONE : records
+    CHILD_RECORD ||--o{ VACCINATION : records
+    EVENT }o--|| MATERNAL_RECORD : "subject (or)"
+    EVENT }o--|| CHILD_RECORD : "subject (or)"
+```
+
+> `EVENT.subject` is polymorphic (a MaternalRecord or a ChildRecord), unifying the timeline across the journey. `ContentItem` and `ScheduleEntry` are unscoped reference data and are omitted from the diagram.
+
 ## 4. Cardinalities & Notes
 
 | Relationship | Cardinality | Notes |

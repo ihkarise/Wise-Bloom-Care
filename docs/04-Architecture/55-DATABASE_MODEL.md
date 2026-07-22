@@ -26,8 +26,9 @@ Logical entities/relationships and the continuity invariants. Physical realisati
 | **Family** | Root of the family record graph | id, owner, created_at |
 | **User** | Auth identity | id, email(hashed), role, status |
 | **Session** | Auth session | id, user, issued/expires |
-| **MaternalRecord** | Mother/birthing-parent node | id, family, LMP, EDD, profile |
-| **ChildRecord** | Child node | id, family, **mother (immutable)**, DOB, sex, GA-at-birth |
+| **MaternalRecord** | Mother/birthing-parent node | id, family, profile |
+| **PregnancyEpisode** | One pregnancy of a mother (LMP/EDD, outcome) | id, maternal, LMP, EDD, status/outcome |
+| **ChildRecord** | Child node | id, family, **mother (immutable)**, **episode**, DOB, sex, GA-at-birth |
 | **Event** | Timeline entry (append-only, versioned) | id, family, subject, type, life_stage, occurred_at, payload, version, author |
 | **Vital** | BP/weight/blood sugar measure | id, subject, type, value, unit, context, measured_at |
 | **Appointment** | Scheduled visit | id, family, subject, when, status |
@@ -47,6 +48,8 @@ Logical entities/relationships and the continuity invariants. Physical realisati
 ```
 Family 1───* MaternalRecord (typically 1)
 Family 1───* ChildRecord
+MaternalRecord 1───* PregnancyEpisode                            [multi-pregnancy]
+PregnancyEpisode 0..1───* ChildRecord (episode → resulting child(ren))
 MaternalRecord 1───* ChildRecord     (mother link; immutable)   [continuity]
 Family 1───* Event                    (subject = maternal or child)
 MaternalRecord/ChildRecord 1───* Vital, Appointment, Medicine, Report, JournalEntry
@@ -89,7 +92,7 @@ These are computed by services (`52`) to avoid drift (P5); never stored as autho
 
 ## 9. Edge Cases
 
-- Multiple pregnancies over time: multiple MaternalRecord "pregnancy episodes" or a maternal record with pregnancy episodes (see `docs/05-Data/71` for the chosen representation) — model must not assume a single pregnancy.
+- Multiple pregnancies over time: one MaternalRecord with multiple **PregnancyEpisode** rows (LMP/EDD/outcome per episode; see `docs/05-Data/71` §5) — the model never assumes a single pregnancy.
 - Loss path: pregnancy episode reaches a terminal state without a ChildRecord.
 - Multiple caregivers: many CaregiverAccess grants per family.
 - Preterm: GA-at-birth stored to support corrected-age computations.
@@ -103,7 +106,7 @@ These are computed by services (`52`) to avoid drift (P5); never stored as autho
 
 ## 11. Future Expansion
 
-Add entities for clinician users/portal, device readings, offline-sync metadata, and additional life stages; formalise pregnancy-episode entity if multi-pregnancy is prioritised.
+Add entities for clinician users/portal, device readings, offline-sync metadata, and additional life stages. (The PregnancyEpisode entity is already formalised — see §3, `docs/05-Data/71` §5.)
 
 ## 12. Dependencies
 
@@ -111,7 +114,7 @@ Add entities for clinician users/portal, device readings, offline-sync metadata,
 
 ## 13. Open Questions
 
-- OQ-1: Representation of multiple pregnancies (episodes vs. new maternal records) — resolve in `71`.
+- OQ-1: **Resolved** — multiple pregnancies are modelled with a **PregnancyEpisode** entity under MaternalRecord (LMP/EDD/outcome live on the episode); see `docs/05-Data/71-ENTITY_RELATIONSHIP.md` §5. Remaining sub-question: v1 UI exposure of multiple episodes (model is ready).
 - OQ-2: Whether "subject" is a formal supertype entity or a typed reference.
 
 ## 14. Risks

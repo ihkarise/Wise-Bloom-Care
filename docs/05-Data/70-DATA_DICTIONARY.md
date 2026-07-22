@@ -48,10 +48,18 @@ Entities and their key fields, meaning, ownership, and sensitivity. Detailed typ
 |---|---|---|---|
 | maternal_id | PK | MaternalService | Highly-sensitive |
 | family_id | FK | MaternalService | Sensitive |
-| lmp | last menstrual period | MaternalService | Highly-sensitive |
-| edd | estimated due date | MaternalService | Highly-sensitive |
-| pre_pregnancy_bmi_cat | BMI category (for weight bands) | MaternalService | Highly-sensitive |
 | profile | name/DOB/contact | MaternalService | Highly-sensitive |
+
+### PregnancyEpisode
+| Field | Meaning | Owner | Sensitivity |
+|---|---|---|---|
+| episode_id | PK | PregnancyService | Highly-sensitive |
+| maternal_id | FK | PregnancyService | Sensitive |
+| lmp | last menstrual period | PregnancyService | Highly-sensitive |
+| edd | estimated due date | PregnancyService | Highly-sensitive |
+| pre_pregnancy_bmi_cat | BMI category (for weight bands) | PregnancyService | Highly-sensitive |
+| parity | nulliparous/parous/unknown (NICE scaffold) | PregnancyService | Highly-sensitive |
+| status | active/delivered/loss (outcome) | PregnancyService | Highly-sensitive |
 
 ### ChildRecord
 | Field | Meaning | Owner | Sensitivity |
@@ -59,6 +67,7 @@ Entities and their key fields, meaning, ownership, and sensitivity. Detailed typ
 | child_id | PK | ChildService | Highly-sensitive |
 | family_id | FK | ChildService | Sensitive |
 | mother_id | **immutable** link to MaternalRecord | DeliveryService | Highly-sensitive |
+| episode_id | link to originating PregnancyEpisode | DeliveryService | Highly-sensitive |
 | dob | date of birth | DeliveryService | Highly-sensitive |
 | sex | for WHO growth curve | ChildService | Highly-sensitive |
 | ga_at_birth | gestational age at birth (preterm/corrected-age) | DeliveryService | Highly-sensitive |
@@ -135,7 +144,7 @@ Add clinician/device/offline-sync entities; generate a machine-readable dictiona
 
 ## 10. Open Questions
 
-- OQ-1: Multi-pregnancy representation (resolve in `71`) affects maternal fields.
+- OQ-1: **Resolved** — pregnancy fields (LMP/EDD/BMI/parity/outcome) live on the **PregnancyEpisode** entity, not MaternalRecord (`docs/05-Data/71` §5). Remaining: v1 UI exposure of multiple episodes.
 - OQ-2: Whether email is hashed, tokenised, or encrypted-at-rest (see `72`/`121`).
 
 ## 11. Risks

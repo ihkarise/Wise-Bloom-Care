@@ -67,7 +67,7 @@ Add FIGO guidance on preeclampsia prevention and adolescent/preconception care (
 ## 11. Open Questions
 
 - OQ-1: Which screening protocol to reference by default per jurisdiction (FIGO single-step vs. national two-step).
-- OQ-2: Canonical glucose unit (mg/dL vs. mmol/L) by market.
+- OQ-2: Canonical **storage** unit for glucose is decided as mg/dL (`docs/05-Data/72-FIELD_SPECIFICATIONS.md` §5); open only is the **display** default per market (mg/dL vs. mmol/L), a settings/localisation choice.
 
 ## 12. Risks
 

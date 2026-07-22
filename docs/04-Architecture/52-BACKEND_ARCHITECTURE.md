@@ -35,7 +35,7 @@ Controllers        ─ auth guard, input validation, rate limiting
   │
 Domain services    ─ business rules (single source of truth):
   - AuthService, SessionService
-  - FamilyService, MaternalService, ChildService
+  - FamilyService, MaternalService, PregnancyService, ChildService
   - DeliveryService  (SOLE creator of child + immutable link)
   - TimelineService  (append-only, versioned events)
   - VitalsService, ReportsService, MedicinesService, AppointmentsService

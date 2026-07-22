@@ -30,7 +30,8 @@ Covers product/domain terms, clinical/obstetric terms used in the product, and p
 | Term | Definition | Notes / Avoid |
 |---|---|---|
 | **Family record** **[entity]** | The single linked graph representing one family: one maternal node and one or more child nodes. | The unit of continuity. Avoid: "account data". |
-| **Maternal record** **[entity]** | The mother/birthing-parent node holding pregnancy and postpartum data. | Avoid: "mom profile". |
+| **Maternal record** **[entity]** | The mother/birthing-parent node; the anchor for one or more pregnancy episodes. | Avoid: "mom profile". |
+| **Pregnancy episode** **[entity]** | One pregnancy of a mother (its own LMP/EDD and outcome); children link to their originating episode. Supports multiple pregnancies over time and loss (episode ends without a child). | See `docs/05-Data/71` §5. Avoid: conflating with the maternal record. |
 | **Child record / Baby profile** **[entity]** | A child node, permanently linked to the maternal record it originated from. | Created only by the delivery event. Avoid: "kid account". |
 | **Journey** | The continuous, append-only sequence of a family's health from conception onward. | The organising metaphor. |
 | **Timeline** **[entity]** | The chronological, append-only stream of events across the journey. | See `docs/08-Timeline`. |

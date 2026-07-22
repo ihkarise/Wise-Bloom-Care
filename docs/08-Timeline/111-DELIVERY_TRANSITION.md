@@ -28,6 +28,46 @@ The timeline behaviour across delivery: how the delivery event bridges maternal 
 … newborn events (subject = child)       ├─ one continuous timeline, two subjects
 ```
 
+### 3.1 Sequence: recording a delivery (mermaid)
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant API as API (/v1/delivery)
+    participant DS as DeliveryService
+    participant TL as TimelineService
+    participant ST as StorageAdapter
+    participant AU as AuditService
+    U->>API: POST /v1/delivery (outcome, newborn[s], idempotency-key)
+    API->>DS: authorise + validate
+    alt live birth
+        DS->>ST: create ChildRecord(s) {mother_id immutable, episode_id} (idempotent)
+        DS->>TL: append delivery Event (bridges episode ↔ child)
+        DS->>AU: audit delivery (integrity event)
+        DS-->>API: child(ren) + continued timeline
+        API-->>U: baby profile linked; timeline continues
+    else loss
+        DS->>ST: close PregnancyEpisode (terminal, no child)
+        DS->>TL: append compassionate outcome Event
+        DS->>AU: audit
+        DS-->>API: terminal state (no child)
+        API-->>U: compassionate path; no baby prompts
+    end
+```
+
+### 3.2 Pregnancy episode state machine (mermaid)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Active: episode created (LMP/EDD)
+    Active --> Delivered: delivery event (live birth) --> creates linked child(ren)
+    Active --> Loss: loss outcome (no child; compassionate)
+    Delivered --> [*]
+    Loss --> [*]
+    note right of Delivered: mother_id immutable; idempotent; 0 duplicates
+    note right of Loss: never forces a child profile (BR-7)
+```
+
 - The delivery event belongs to both views: it closes the pregnancy episode and opens the child's life on the **same** timeline.
 - No new account, no migration, no duplicate — the child is created once and linked immutably (Vision BR-V2).
 
