@@ -1,0 +1,25 @@
+---
+/**
+ * Root route shell (docs/04-Architecture/51 §5). Static Astro document that
+ * hydrates a single interactive island. Semantic design tokens are loaded once
+ * here (docs/03-UX/35 §3).
+ */
+import AppShell from '../islands/AppShell';
+import '../styles/tokens.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Wise Bloom Care — one continuous mother & child health record."
+    />
+    <title>Wise Bloom Care</title>
+  </head>
+  <body>
+    <AppShell client:load environment="dev" />
+  </body>
+</html>
