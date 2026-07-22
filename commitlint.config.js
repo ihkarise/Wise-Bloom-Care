@@ -12,5 +12,8 @@ export default {
     ],
     'header-max-length': [2, 'always', 100],
     'body-leading-blank': [2, 'always'],
+    // Allow long lines in bodies/footers (doc refs, URLs, trailers).
+    'body-max-line-length': [0, 'always', 200],
+    'footer-max-line-length': [0, 'always', 200],
   },
 };

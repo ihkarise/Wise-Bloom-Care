@@ -1,0 +1,23 @@
+{
+  "name": "@wise-bloom/lint-rules",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Custom ESLint rules enforcing the two architectural boundaries (docs/04-Architecture/51 BR-1, 53 BR-1).",
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/estree": "^1.0.6",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
