@@ -1,0 +1,26 @@
+{
+  "name": "@wise-bloom/config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared ESLint, Prettier, and TypeScript configuration (docs/11-Development/140).",
+  "type": "module",
+  "exports": {
+    "./eslint": "./eslint/index.ts",
+    "./prettier": "./prettier/index.json",
+    "./tsconfig/base": "./tsconfig/base.json",
+    "./tsconfig/library": "./tsconfig/library.json",
+    "./tsconfig/app": "./tsconfig/app.json"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.17.0",
+    "@wise-bloom/lint-rules": "workspace:*",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.14.0",
+    "typescript-eslint": "^8.19.0"
+  },
+  "peerDependencies": {
+    "eslint": ">=9",
+    "prettier": ">=3",
+    "typescript": ">=5"
+  }
+}
