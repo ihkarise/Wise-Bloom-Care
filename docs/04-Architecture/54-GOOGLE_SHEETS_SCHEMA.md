@@ -7,7 +7,7 @@
 | Version | 1.0 |
 | Owner | Database Architect |
 | Last Updated | 2026-07-22 |
-| Related | `55-DATABASE_MODEL.md`, `53-GOOGLE_APPS_SCRIPT.md`, `docs/05-Data/70-DATA_DICTIONARY.md`, `docs/05-Data/72-FIELD_SPECIFICATIONS.md` |
+| Related | `55-DATABASE_MODEL.md`, `53-GOOGLE_APPS_SCRIPT.md`, `docs/05-Data/70-DATA_DICTIONARY.md`, `docs/05-Data/72-FIELD_SPECIFICATIONS.md`, `docs/ADR/ADR-001-Google-Sheets.md` |
 
 ---
 

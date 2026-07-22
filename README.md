@@ -36,6 +36,47 @@ Independent, versioned medical/educational content that feeds both direct educat
 
 Astro · React · TypeScript · Tailwind CSS · Chart.js (frontend) · Google Apps Script (backend, v1) · private Google Sheets (storage, v1, behind a swappable adapter). The architecture is deliberately modular so the backend can migrate to PostgreSQL / Supabase / Firebase / Cloud SQL **without a frontend rewrite** (the API contract is the boundary).
 
-## Start here
+## Folder tree
 
-`docs/00-Vision/00-VISION.md` → `docs/01-Product/10-PRD.md` → `docs/04-Architecture/50-SYSTEM_ARCHITECTURE.md`.
+```
+Wise-Bloom-Care/
+├─ README.md
+├─ ARCHITECTURE_REVIEW_REPORT.md      # architecture audit (findings, grades)
+├─ FINAL_REPOSITORY_REVIEW.md         # repository quality pass (health, scores)
+├─ docs/
+│  ├─ 00-Vision/        01-Product/     02-Research/    03-UX/
+│  ├─ 04-Architecture/  05-Data/        06-Modules/     07-AI/
+│  ├─ 08-Timeline/      09-Security/    10-Testing/     11-Development/
+│  ├─ 12-Operations/    13-Future/
+│  └─ ADR/                              # ADR-001 … ADR-006
+└─ knowledge-base/
+   ├─ pregnancy/        # week01.md … week40.md + README
+   ├─ delivery/  newborn/  growth/  milestones/
+   └─ vaccination/  nutrition/  exercise/  emergency/  medicines/
+```
+
+> This repository is documentation only. Application code (`apps/web`, `apps/backend`, `packages/`) is introduced at implementation per `docs/04-Architecture/59-FOLDER_STRUCTURE.md`.
+
+## Architecture map (one line)
+
+`Client (Astro/React/TS/Tailwind/Chart.js)` → **API contract** (`docs/04-Architecture/56`) → `Application layer (Apps Script services)` → **Storage Adapter** (`docs/04-Architecture/52`) → `Google Sheets (v1) + private Drive`. The two bold boundaries make the storage engine swappable without a frontend rewrite. See `docs/04-Architecture/50-SYSTEM_ARCHITECTURE.md`.
+
+## Reading order (onboarding)
+
+1. `docs/00-Vision/00-VISION.md` — the one-record thesis and invariants.
+2. `docs/01-Product/10-PRD.md` — requirements and KPIs.
+3. `docs/04-Architecture/50-SYSTEM_ARCHITECTURE.md` — layers and boundaries.
+4. `docs/05-Data/71-ENTITY_RELATIONSHIP.md` — the data model (ER diagram).
+5. `docs/06-Modules/88-DELIVERY_MODULE.md` + `docs/08-Timeline/111-DELIVERY_TRANSITION.md` — the continuity keystone.
+6. `docs/02-Research/28-MEDICAL_DISCLAIMER.md` + `docs/07-AI/105-GUARDRAILS.md` — the safety model.
+
+## Development order (implementation sequence)
+
+Follow the phased plan in `docs/01-Product/14-ROADMAP.md`, `15-MILESTONES.md`, and `13-Future/164-BACKLOG.md`:
+
+1. **Foundation** — auth, single family record, append-only timeline, dashboard (`80`,`81`).
+2. **Pregnancy core** — vitals, medicines, appointments, reports, week knowledge (`82`–`87`).
+3. **Delivery transition (keystone)** — auto-create the linked child; no duplicates (`88`, MS-1.7).
+4. **Baby core** — WHO growth, CDC milestones, vaccination (`89`–`92`).
+5. **Cross-cutting** — notifications, settings, export, hardening (a11y, security, backups).
+6. **v2+** — AI (behind guardrails), prediction, sharing; then v3 migration/portal/offline.

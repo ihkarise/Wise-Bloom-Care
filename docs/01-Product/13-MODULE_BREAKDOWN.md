@@ -31,7 +31,7 @@ Modules are grouped by layer of concern. Each module has: a single responsibilit
 ### 2.2 Pregnancy modules
 | Module | Responsibility | Owns | Spec |
 |---|---|---|---|
-| Pregnancy | Pregnancy state, GA/EDD, week context | Pregnancy record | `82-PREGNANCY_MODULE.md` |
+| Pregnancy | Pregnancy state, GA/EDD, week context | PregnancyEpisode | `82-PREGNANCY_MODULE.md` |
 | Vitals | BP, weight, weight gain, blood sugar + trends | Vital measurements | `83-VITALS_MODULE.md` |
 | Nutrition | Nutrition guidance & logging | Nutrition entries | `86-NUTRITION_MODULE.md` |
 | Exercise | Exercise guidance & logging | Exercise entries | `87-EXERCISE_MODULE.md` |

@@ -7,7 +7,7 @@
 | Version | 1.0 |
 | Owner | AI Systems Architect |
 | Last Updated | 2026-07-22 |
-| Related | `101-KNOWLEDGE_BASE.md`, `103-RAG_DESIGN.md`, `105-GUARDRAILS.md`, `docs/06-Modules/94-AI_MODULE.md`, `docs/02-Research/28-MEDICAL_DISCLAIMER.md` |
+| Related | `101-KNOWLEDGE_BASE.md`, `103-RAG_DESIGN.md`, `105-GUARDRAILS.md`, `docs/06-Modules/94-AI_MODULE.md`, `docs/02-Research/28-MEDICAL_DISCLAIMER.md`, `docs/ADR/ADR-005-AI-Architecture.md` |
 
 ---
 

@@ -59,9 +59,9 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Active: episode created (LMP/EDD)
-    Active --> Delivered: delivery event (live birth) --> creates linked child(ren)
-    Active --> Loss: loss outcome (no child; compassionate)
+    [*] --> Active: episode created with LMP/EDD
+    Active --> Delivered: live birth creates linked child(ren)
+    Active --> Loss: loss outcome, no child, compassionate
     Delivered --> [*]
     Loss --> [*]
     note right of Delivered: mother_id immutable; idempotent; 0 duplicates
