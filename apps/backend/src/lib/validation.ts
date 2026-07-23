@@ -9,6 +9,8 @@
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const ISO_DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+// Structural check only — not a full RFC 5322 validator (deliverability is proven by use, not by regex).
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Strips ASCII control characters before storage (docs/05-Data/73 §8).
 // eslint-disable-next-line no-control-regex
 const CONTROL_CHARS_RE = new RegExp('[\\u0000-\\u001F\\u007F]', 'g');
@@ -20,6 +22,11 @@ export function isIsoDate(value: string): boolean {
 
 export function isIsoDateTime(value: string): boolean {
   return ISO_DATETIME_RE.test(value) && !Number.isNaN(Date.parse(value));
+}
+
+/** Structural email format check (docs/05-Data/73 §4). Not a proof of deliverability. */
+export function isEmail(value: string): boolean {
+  return EMAIL_RE.test(value);
 }
 
 /**
