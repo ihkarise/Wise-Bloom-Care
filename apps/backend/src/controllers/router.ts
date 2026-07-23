@@ -2,24 +2,29 @@
  * Request controller / router (docs/04-Architecture/52 §4).
  *
  * Wires the cross-cutting request pipeline — authenticate → rate-limit →
- * validate → dispatch — that every endpoint passes through. Sprint 00 ships the
- * pipeline as skeleton stubs (no business logic, no domain handlers yet); later
- * sprints register service-backed handlers (docs/20-Implementation/205 Task 5).
+ * validate → dispatch — that every endpoint passes through. Authentication is
+ * real as of Sprint 01: `resolveActor` turns a bearer token into an
+ * `AuthenticatedActor` via SessionService (docs/04-Architecture/57 §6), fail
+ * closed on anything invalid (52 §8). A small set of routes — register/login —
+ * are public (no session exists yet) and are dispatched with a `null` actor.
  * The contract these route to is docs/04-Architecture/56.
  */
 
 import { ENDPOINTS, type ErrorCode, type HttpMethod } from '@wise-bloom/api-contract';
 
 import type { Logger } from '../lib/logging';
+import type { Role, UUID } from '@wise-bloom/domain-types';
 
 export interface ApiRequest {
   method: HttpMethod;
   path: string;
-  /** Bearer token (docs/04-Architecture/57). Absent → unauthenticated. */
+  /** Bearer token (docs/04-Architecture/57). Absent → unauthenticated (unless the route is public). */
   token?: string;
   idempotencyKey?: string;
   correlationId?: string;
   body?: unknown;
+  /** Query-string parameters (docs/04-Architecture/56 §3 cursor/filter params). */
+  query?: Record<string, string>;
 }
 
 export interface ApiResponse {
@@ -27,9 +32,12 @@ export interface ApiResponse {
   body: unknown;
 }
 
-/** The authenticated caller. Identity resolution is added with AuthService (Sprint 01). */
-export interface Actor {
+/** The authenticated caller, resolved from a validated session (docs/09-Security/123 §5). */
+export interface AuthenticatedActor {
   authenticated: true;
+  userId: UUID;
+  role: Role;
+  sessionId: UUID;
 }
 
 /** A safe, coded error surfaced through the standard envelope (docs/04-Architecture/56 §8). */
@@ -58,54 +66,85 @@ function fail(code: ErrorCode, message: string): never {
   throw new ApiException(code, STATUS_BY_CODE[code], message);
 }
 
-/** A route handler. The registry is populated by domain controllers in later sprints. */
-export type RouteHandler = (request: ApiRequest, actor: Actor) => ApiResponse;
+/**
+ * Fails closed with `unauthenticated` if the route resolved no actor. Public
+ * routes never call this; every protected-route handler starts with it so
+ * the rest of the handler can treat `actor` as always present.
+ */
+export function requireActor(actor: AuthenticatedActor | null): AuthenticatedActor {
+  if (!actor) {
+    fail('unauthenticated', 'Authentication required');
+  }
+  return actor;
+}
+
+/** A route handler. `actor` is `null` only for routes listed in `publicRoutes`. */
+export type RouteHandler = (request: ApiRequest, actor: AuthenticatedActor | null) => ApiResponse;
 
 export interface RouterDeps {
   logger: Logger;
-  /** METHOD + ' ' + path → handler. Empty in Sprint 00. */
+  /** METHOD + ' ' + path → handler. */
   handlers?: Record<string, RouteHandler>;
+  /** Routes dispatched without a token (docs/04-Architecture/57 §4–5: register/login). */
+  publicRoutes?: ReadonlySet<string>;
+  /** Bearer token → authenticated actor; throws to fail closed on anything invalid/expired (122 BR-1). */
+  resolveActor?: (token: string) => AuthenticatedActor;
 }
 
 const KNOWN_ROUTES = new Set(ENDPOINTS.map((e) => `${e.method} ${e.path}`));
 
 export function createRouter(deps: RouterDeps): (request: ApiRequest) => ApiResponse {
   const handlers = deps.handlers ?? {};
+  const publicRoutes = deps.publicRoutes ?? new Set<string>();
 
-  /** Auth guard stub — fail closed when no token is present (docs/04-Architecture/52 §7). */
-  function authenticate(request: ApiRequest): Actor {
+  /** Auth guard — public routes skip it; every other route requires a token that resolves to a live session. */
+  function authenticate(request: ApiRequest, routeKey: string): AuthenticatedActor | null {
+    if (publicRoutes.has(routeKey)) {
+      return null;
+    }
     if (!request.token) {
       fail('unauthenticated', 'Missing bearer token');
     }
-    return { authenticated: true };
+    if (!deps.resolveActor) {
+      fail('server_error', 'Authentication is not configured');
+    }
+    try {
+      return deps.resolveActor(request.token);
+    } catch {
+      fail('unauthenticated', 'Invalid or expired session');
+    }
   }
 
-  /** Rate-limit stub — per-user/endpoint budgets are added in hardening (docs/09-Security/120). */
+  /** Rate-limit stub — endpoint-specific limits (register/login) live in AuthService (docs/09-Security/120). */
   function enforceRateLimit(_request: ApiRequest): void {
-    // No-op in Sprint 00; the hook exists so the pipeline shape is fixed.
+    // No-op here; see AuthService's injected RateLimiter for the auth endpoints.
   }
 
   /** Input-validation stub — structural/plausibility checks land per endpoint (docs/05-Data/73). */
   function validate(_request: ApiRequest): void {
-    // No-op in Sprint 00; validation helpers live in lib/validation.
+    // No-op here; each controller validates its own payload before calling a service.
   }
 
-  function dispatch(request: ApiRequest, actor: Actor): ApiResponse {
-    const key = `${request.method} ${request.path}`;
-    const handler = handlers[key];
+  function dispatch(
+    request: ApiRequest,
+    routeKey: string,
+    actor: AuthenticatedActor | null,
+  ): ApiResponse {
+    const handler = handlers[routeKey];
     if (handler) {
       return handler(request, actor);
     }
     // Known contract route with no handler yet, or an unknown route.
-    fail('not_found', KNOWN_ROUTES.has(key) ? 'Not implemented in Sprint 00' : 'Unknown route');
+    fail('not_found', KNOWN_ROUTES.has(routeKey) ? 'Not implemented' : 'Unknown route');
   }
 
   return function handle(request: ApiRequest): ApiResponse {
+    const routeKey = `${request.method} ${request.path}`;
     try {
-      const actor = authenticate(request);
+      const actor = authenticate(request, routeKey);
       enforceRateLimit(request);
       validate(request);
-      return dispatch(request, actor);
+      return dispatch(request, routeKey, actor);
     } catch (error) {
       if (error instanceof ApiException) {
         deps.logger.warn('request_failed', {

@@ -12,9 +12,21 @@
 
 import type {
   Appointment,
+  BmiCategory,
+  ContentItem,
   Event,
+  Family,
   GrowthMeasurement,
+  ISODate,
+  MaternalProfile,
+  MaternalRecord,
   Milestone,
+  Parity,
+  PregnancyEpisode,
+  Role,
+  Session,
+  UUID,
+  UserStatus,
   Vaccination,
   Vital,
 } from '@wise-bloom/domain-types';
@@ -119,7 +131,28 @@ export const ENDPOINTS = [
   { method: 'POST', path: '/v1/auth/register', purpose: 'create account', write: true },
   { method: 'POST', path: '/v1/auth/login', purpose: 'authenticate', write: true },
   { method: 'POST', path: '/v1/auth/logout', purpose: 'end session', write: true },
+  {
+    method: 'POST',
+    path: '/v1/auth/refresh',
+    purpose: 'renew the session within its absolute lifetime',
+    write: true,
+  },
+  { method: 'GET', path: '/v1/family', purpose: 'the caller’s family record', write: false },
+  { method: 'GET', path: '/v1/maternal', purpose: 'the caller’s maternal record', write: false },
+  {
+    method: 'POST',
+    path: '/v1/maternal/pregnancy-episodes',
+    purpose: 'create a pregnancy episode (LMP/EDD)',
+    write: true,
+  },
+  {
+    method: 'GET',
+    path: '/v1/maternal/pregnancy-episodes',
+    purpose: 'list the maternal record’s pregnancy episodes',
+    write: false,
+  },
   { method: 'GET', path: '/v1/timeline', purpose: 'continuous timeline', write: false },
+  { method: 'GET', path: '/v1/content', purpose: 'a typed, sourced content item', write: false },
   { method: 'POST', path: '/v1/vitals', purpose: 'log a vital', write: true },
   { method: 'GET', path: '/v1/vitals', purpose: 'vital series', write: false },
   { method: 'GET', path: '/v1/appointments', purpose: 'list appointments', write: false },
@@ -176,3 +209,102 @@ export type MilestoneListResponse = Paginated<Milestone>;
 
 /** `GET /v1/vaccinations?child=` → dose records. */
 export type VaccinationListResponse = Paginated<Vaccination>;
+
+// ---------------------------------------------------------------------------
+// Auth / Family / Maternal / Pregnancy / Content (docs/20-Implementation/206)
+// ---------------------------------------------------------------------------
+
+/**
+ * The safe, public view of a `User` — never the credential/email hashes
+ * (docs/04-Architecture/58 §7: the client holds no secrets and the API never
+ * returns them).
+ */
+export interface PublicUser {
+  user_id: UUID;
+  role: Role;
+  status: UserStatus;
+}
+
+/** An issued or renewed session (docs/04-Architecture/57 §6). `token` is the bearer credential to send on every request. */
+export interface AuthSession {
+  token: Session['session_id'];
+  issued_at: Session['issued_at'];
+  expires_at: Session['expires_at'];
+}
+
+/** `POST /v1/auth/register` request. Disclaimer acknowledgement is mandatory (docs/02-Research/28 BR-5). */
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  disclaimer_ack: true;
+  /** The account holder's name, used to seed the MaternalRecord profile (docs/04-Architecture/57 §4). */
+  maternal_name: string;
+}
+
+/** `POST /v1/auth/register` response — account + session + the seeded family/maternal scaffold. */
+export interface RegisterResponse {
+  user: PublicUser;
+  session: AuthSession;
+  family: Family;
+  maternal: MaternalRecord;
+}
+
+/** `POST /v1/auth/login` request. */
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+/** `POST /v1/auth/login` response. */
+export interface LoginResponse {
+  user: PublicUser;
+  session: AuthSession;
+}
+
+/** `POST /v1/auth/refresh` response — the bearer token is unchanged; only the expiry moves. */
+export interface RefreshResponse {
+  session: AuthSession;
+}
+
+/** `GET /v1/family` response. */
+export interface FamilyResponse {
+  family: Family;
+}
+
+/** `GET /v1/maternal` response. */
+export interface MaternalResponse {
+  maternal: MaternalRecord;
+}
+
+/** `POST /v1/maternal/pregnancy-episodes` request. Forgiving: all fields optional (P9). */
+export interface CreatePregnancyEpisodeRequest {
+  lmp?: ISODate;
+  edd?: ISODate;
+  pre_pregnancy_bmi_cat?: BmiCategory;
+  parity?: Parity;
+}
+
+/** Derived gestational-age view, computed for display only (docs/06-Modules/82 BR-1) — never persisted. */
+export interface GestationalAgeView {
+  days: number;
+  weeks: number;
+  daysIntoWeek: number;
+}
+
+/** `POST|GET /v1/maternal/pregnancy-episodes` item response. */
+export interface PregnancyEpisodeResponse {
+  episode: PregnancyEpisode;
+  /** `null` when LMP is unknown (forgiving entry, P9). */
+  gestational_age: GestationalAgeView | null;
+}
+
+/** `GET /v1/maternal/pregnancy-episodes` list response — each item includes its derived GA (BR-1: server-computed, never re-derived client-side, docs/04-Architecture/51 BR-3). */
+export type PregnancyEpisodeListResponse = Paginated<PregnancyEpisodeResponse>;
+
+/** `GET /v1/content` response — refuses to resolve untyped/unsourced items (docs/02-Research/28 BR-1/BR-2). */
+export interface ContentItemResponse {
+  content: ContentItem;
+}
+
+/** Re-exported for convenience where callers only need the maternal profile shape. */
+export type { MaternalProfile };
