@@ -4,29 +4,24 @@
  * rule). It depends solely on the API contract (`@wise-bloom/api-contract`), so
  * swapping backend storage causes zero client changes (51 BR-2, NFR-6).
  *
- * Sprint 00 ships the client typed against the contract; endpoints are not yet
- * implemented server-side. Every request carries a bearer token (docs/04-Architecture/57)
- * and writes carry an idempotency key (docs/04-Architecture/56 §3).
+ * This is the shared low-level transport only: URL/query building, headers,
+ * idempotency keys, and error envelopes. Domain-specific calls live in
+ * sibling files (`auth.ts`, `family.ts`, `maternal.ts`, `timeline.ts`, ...),
+ * one per feature, each a thin typed wrapper around `request()` — every
+ * request still carries a bearer token once authenticated
+ * (docs/04-Architecture/57) and every write carries an idempotency key
+ * (docs/04-Architecture/56 §3).
  */
 
 import { API_VERSION } from '@wise-bloom/api-contract';
 
-import type {
-  ApiErrorEnvelope,
-  CreateVitalRequest,
-  CreateVitalResponse,
-  GrowthSeriesResponse,
-  MilestoneListResponse,
-  TimelineResponse,
-  VaccinationListResponse,
-  VitalSeriesResponse,
-} from '@wise-bloom/api-contract';
+import type { ApiErrorEnvelope } from '@wise-bloom/api-contract';
 
 export interface ApiClientOptions {
   /** Backend base URL (public config only — never a secret; docs/04-Architecture/60 §4). */
   baseUrl: string;
-  /** Bearer token obtained from the auth flow (docs/04-Architecture/57). */
-  token: string;
+  /** Bearer token from the auth flow (docs/04-Architecture/57). Absent before login/registration. */
+  token?: string;
   /** Injectable for tests; defaults to the global fetch. */
   fetchImpl?: typeof fetch;
 }
@@ -42,8 +37,8 @@ export class ApiRequestError extends Error {
   }
 }
 
-interface RequestInitLite {
-  method: string;
+export interface RequestInitLite {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   query?: Record<string, string | undefined>;
   idempotencyKey?: string;
@@ -56,7 +51,7 @@ function newIdempotencyKey(): string {
 
 export class ApiClient {
   private readonly baseUrl: string;
-  private readonly token: string;
+  private readonly token: string | undefined;
   private readonly fetchImpl: typeof fetch;
 
   constructor(options: ApiClientOptions) {
@@ -65,7 +60,8 @@ export class ApiClient {
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
   }
 
-  private async request<T>(path: string, init: RequestInitLite): Promise<T> {
+  /** Issues one request against `/v1{path}`. Public so per-feature modules under `api/` can build on it. */
+  async request<T>(path: string, init: RequestInitLite): Promise<T> {
     const url = new URL(`${this.baseUrl}/${API_VERSION}${path}`);
     for (const [key, value] of Object.entries(init.query ?? {})) {
       if (value !== undefined) {
@@ -73,12 +69,15 @@ export class ApiClient {
       }
     }
 
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${this.token}`,
-      Accept: 'application/json',
-    };
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
     if (init.body !== undefined) {
       headers['Content-Type'] = 'application/json';
+    }
+    // Every write carries an idempotency key, whether or not it has a body (docs/04-Architecture/56 §3).
+    if (init.method !== 'GET') {
       headers['Idempotency-Key'] = init.idempotencyKey ?? newIdempotencyKey();
     }
 
@@ -93,44 +92,5 @@ export class ApiClient {
       throw new ApiRequestError(response.status, payload as ApiErrorEnvelope);
     }
     return payload as T;
-  }
-
-  /** `GET /v1/timeline?cursor=` — one continuous stream (docs/04-Architecture/56 §5, BR-3). */
-  getTimeline(cursor?: string): Promise<TimelineResponse> {
-    return this.request<TimelineResponse>('/timeline', { method: 'GET', query: { cursor } });
-  }
-
-  /** `POST /v1/vitals` — log a vital; returns the event + trend (docs/04-Architecture/56 §5). */
-  createVital(input: CreateVitalRequest): Promise<CreateVitalResponse> {
-    return this.request<CreateVitalResponse>('/vitals', { method: 'POST', body: input });
-  }
-
-  /** `GET /v1/vitals?type=` — a vital series for charts. */
-  getVitals(type: string, cursor?: string): Promise<VitalSeriesResponse> {
-    return this.request<VitalSeriesResponse>('/vitals', { method: 'GET', query: { type, cursor } });
-  }
-
-  /** `GET /v1/growth?child=` — WHO growth series. */
-  getGrowth(childId: string, cursor?: string): Promise<GrowthSeriesResponse> {
-    return this.request<GrowthSeriesResponse>('/growth', {
-      method: 'GET',
-      query: { child: childId, cursor },
-    });
-  }
-
-  /** `GET /v1/milestones?child=` — non-diagnostic milestone status. */
-  getMilestones(childId: string): Promise<MilestoneListResponse> {
-    return this.request<MilestoneListResponse>('/milestones', {
-      method: 'GET',
-      query: { child: childId },
-    });
-  }
-
-  /** `GET /v1/vaccinations?child=` — dose records. */
-  getVaccinations(childId: string): Promise<VaccinationListResponse> {
-    return this.request<VaccinationListResponse>('/vaccinations', {
-      method: 'GET',
-      query: { child: childId },
-    });
   }
 }

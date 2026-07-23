@@ -1,0 +1,32 @@
+---
+/**
+ * Registration route (docs/04-Architecture/51 §5, docs/20-Implementation/206
+ * objective 7). Static Astro shell hydrating the RegisterIsland.
+ */
+import RegisterIsland from '../features/auth/RegisterIsland';
+import { apiBaseUrl } from '../lib/apiConfig';
+import '../styles/tokens.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Create your Wise Bloom Care account." />
+    <title>Create your account — Wise Bloom Care</title>
+  </head>
+  <body>
+    <main
+      class="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 bg-surface px-6 py-16 font-sans text-text-primary"
+    >
+      <div>
+        <p class="text-small font-medium uppercase tracking-wide text-text-secondary">
+          Wise Bloom Care
+        </p>
+        <h1 class="text-h1 font-semibold">Create your account</h1>
+      </div>
+      <RegisterIsland client:load apiBaseUrl={apiBaseUrl()} />
+    </main>
+  </body>
+</html>
