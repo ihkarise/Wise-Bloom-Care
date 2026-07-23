@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.astro/
+coverage/
+pnpm-lock.yaml
+CHANGELOG.md
+
+# Frozen architecture & product docs and versioned medical content — never
+# reformatted by tooling (architecture is immutable; docs/20-Implementation/205 §5).
+docs/
+knowledge-base/
+ARCHITECTURE_REVIEW_REPORT.md
+FINAL_REPOSITORY_REVIEW.md
+IMPLEMENTATION_READINESS_REPORT.md

@@ -2,7 +2,7 @@
 
 A premium, privacy-first **Mother & Child Health platform** that preserves **one continuous health record** across the entire family journey — from conception, through pregnancy, delivery, and newborn care, into infancy, toddlerhood, and beyond.
 
-> **Design-first.** This repository is the complete **architecture and product documentation set** for Wise Bloom Care. Per the project's working method, the platform is fully designed before production features are implemented. It contains architecture and documentation only — no application code yet.
+> **Design-first.** This repository holds the complete **architecture and product documentation set** for Wise Bloom Care. Per the project's working method, the platform is fully designed before production features are implemented. **Sprint 00 (foundation) is now implemented**: the monorepo, tooling, CI, the two independence boundaries (API contract + Storage Adapter), and a deployable empty shell. No product features yet — see `docs/20-Implementation/205-SPRINT_00.md` and `SPRINT_00_COMPLETION_REPORT.md`.
 
 - **Domain:** care.wisehomeopathy.com
 - **Founding thesis:** one journey, one linked record — the mother's pregnancy timeline and the child's growth timeline are two views of a single family record. At delivery, the baby profile is created automatically and permanently linked to the mother. No reset, no migration, no duplicates.
@@ -10,23 +10,23 @@ A premium, privacy-first **Mother & Child Health platform** that preserves **one
 
 ## Documentation map (`docs/`)
 
-| Section | Contents |
-|---|---|
-| `00-Vision` | Vision, manifesto, mission, principles, brand, glossary |
-| `01-Product` | PRD, scope, feature matrix, modules, roadmap, milestones, release plan, non-goals, risk register |
-| `02-Research` | WHO / ACOG / FIGO / NICE, immunization, WHO growth, CDC milestones, references, medical disclaimer (cited) |
-| `03-UX` | Personas, journeys, IA, navigation, dashboard, design system, components, color, typography, iconography, accessibility, responsive |
+| Section           | Contents                                                                                                                                                        |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `00-Vision`       | Vision, manifesto, mission, principles, brand, glossary                                                                                                         |
+| `01-Product`      | PRD, scope, feature matrix, modules, roadmap, milestones, release plan, non-goals, risk register                                                                |
+| `02-Research`     | WHO / ACOG / FIGO / NICE, immunization, WHO growth, CDC milestones, references, medical disclaimer (cited)                                                      |
+| `03-UX`           | Personas, journeys, IA, navigation, dashboard, design system, components, color, typography, iconography, accessibility, responsive                             |
 | `04-Architecture` | System, frontend, backend, Apps Script, Sheets schema, data model, API spec, auth, security, folder structure, deployment, domains, backup, logging, monitoring |
-| `05-Data` | Data dictionary, ERD, field specs, validation, retention, audit logs, import/export, versioning |
-| `06-Modules` | 18 module specifications (auth → settings), incl. the delivery-transition keystone |
-| `07-AI` | AI architecture, knowledge base, prompt library, RAG, prediction engine, guardrails, OCR, voice |
-| `08-Timeline` | Pregnancy, delivery transition, postpartum, baby, vaccine, development timelines |
-| `09-Security` | Threat model, encryption, sessions, access control, secrets, incident response, privacy, terms |
-| `10-Testing` | Test plan, cases, manual, UAT, performance, security/AI-safety, regression |
-| `11-Development` | Coding standards, contributing, git workflow, branch strategy, commits, PR template, DoD, changelog |
-| `12-Operations` | Runbook, backup/restore, disaster recovery, maintenance, support guide |
-| `13-Future` | V2, V3, long-term vision, ideas, backlog |
-| `ADR/` | ADR-001 Google Sheets · 002 Apps Script · 003 Astro · 004 Auth · 005 AI · 006 Domains |
+| `05-Data`         | Data dictionary, ERD, field specs, validation, retention, audit logs, import/export, versioning                                                                 |
+| `06-Modules`      | 18 module specifications (auth → settings), incl. the delivery-transition keystone                                                                              |
+| `07-AI`           | AI architecture, knowledge base, prompt library, RAG, prediction engine, guardrails, OCR, voice                                                                 |
+| `08-Timeline`     | Pregnancy, delivery transition, postpartum, baby, vaccine, development timelines                                                                                |
+| `09-Security`     | Threat model, encryption, sessions, access control, secrets, incident response, privacy, terms                                                                  |
+| `10-Testing`      | Test plan, cases, manual, UAT, performance, security/AI-safety, regression                                                                                      |
+| `11-Development`  | Coding standards, contributing, git workflow, branch strategy, commits, PR template, DoD, changelog                                                             |
+| `12-Operations`   | Runbook, backup/restore, disaster recovery, maintenance, support guide                                                                                          |
+| `13-Future`       | V2, V3, long-term vision, ideas, backlog                                                                                                                        |
+| `ADR/`            | ADR-001 Google Sheets · 002 Apps Script · 003 Astro · 004 Auth · 005 AI · 006 Domains                                                                           |
 
 ## Knowledge base (`knowledge-base/`)
 
@@ -41,13 +41,25 @@ Astro · React · TypeScript · Tailwind CSS · Chart.js (frontend) · Google Ap
 ```
 Wise-Bloom-Care/
 ├─ README.md
-├─ ARCHITECTURE_REVIEW_REPORT.md      # architecture audit (findings, grades)
-├─ FINAL_REPOSITORY_REVIEW.md         # repository quality pass (health, scores)
+├─ SPRINT_00_COMPLETION_REPORT.md      # Sprint 00 acceptance & Go/No-Go
+├─ pnpm-workspace.yaml · package.json · tsconfig.base.json · .nvmrc
+├─ eslint.config.ts · prettier.config.mjs · commitlint.config.js
+├─ apps/
+│  ├─ web/                             # Astro + React + TS + Tailwind shell
+│  └─ backend/                         # Google Apps Script (clasp) skeleton
+├─ packages/
+│  ├─ api-contract/                    # boundary #1 — logical API contract (docs 56)
+│  ├─ domain-types/                    # shared TS types (docs 70,72)
+│  └─ config/                          # shared eslint/prettier/tsconfig
+├─ tools/lint-rules/                   # custom boundary lint rules + meta-tests
+├─ scripts/                            # bootstrap · synthetic-data seeder
+├─ tests/                              # contract · integrity · e2e (cross-app)
+├─ .github/workflows/                  # ci.yml · deploy-dev.yml
 ├─ docs/
 │  ├─ 00-Vision/        01-Product/     02-Research/    03-UX/
 │  ├─ 04-Architecture/  05-Data/        06-Modules/     07-AI/
 │  ├─ 08-Timeline/      09-Security/    10-Testing/     11-Development/
-│  ├─ 12-Operations/    13-Future/
+│  ├─ 12-Operations/    13-Future/      20-Implementation/
 │  └─ ADR/                              # ADR-001 … ADR-006
 └─ knowledge-base/
    ├─ pregnancy/        # week01.md … week40.md + README
@@ -55,7 +67,37 @@ Wise-Bloom-Care/
    └─ vaccination/  nutrition/  exercise/  emergency/  medicines/
 ```
 
-> This repository is documentation only. Application code (`apps/web`, `apps/backend`, `packages/`) is introduced at implementation per `docs/04-Architecture/59-FOLDER_STRUCTURE.md`.
+The monorepo layout is specified in `docs/20-Implementation/201-MONOREPO_STRUCTURE.md` (expanding `docs/04-Architecture/59-FOLDER_STRUCTURE.md`).
+
+## Getting started (Sprint 00 build baseline)
+
+**Prerequisites:** Node `22.22.2` (see `.nvmrc`) and pnpm ≥ 10 (`corepack enable`).
+
+```bash
+./scripts/bootstrap.sh      # install deps, scaffold clasp config, set up git hooks
+# or, manually:
+pnpm install
+```
+
+**Everyday commands** (run from the repo root):
+
+| Command                             | What it does                                                                                                         |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `pnpm -r lint` / `pnpm lint`        | ESLint incl. the two boundary rules (no `SpreadsheetApp` outside the adapter; no network outside `apps/web/src/api`) |
+| `pnpm -r typecheck`                 | Strict TypeScript across every package                                                                               |
+| `pnpm -r test`                      | Vitest: adapter round-trip, PHI-safe logging, boundary-rule meta-tests, web smoke test                               |
+| `pnpm -r build`                     | Build all packages and the Astro web app                                                                             |
+| `pnpm --filter @wise-bloom/web dev` | Run the frontend shell locally                                                                                       |
+| `pnpm seed:synthetic`               | Emit a synthetic (never real PHI) family dataset                                                                     |
+
+**CI** (`.github/workflows/ci.yml`) runs lint → type-check → test → build plus secret scanning on every push/PR — this is Sprint 00 gate **G-0**.
+
+**Deploy (dev)** (`.github/workflows/deploy-dev.yml`) builds the frontend artifact and pushes the Apps Script backend to the isolated **dev** environment via `clasp`. It runs on manual dispatch and only when the `DEV_SCRIPT_ID` and `CLASPRC_JSON` environment secrets are configured — **no secrets live in the repo** (`docs/04-Architecture/60` BR-3). Copy `apps/backend/.clasp.json.example` → `.clasp.json` (git-ignored) for local dev.
+
+### The two independence boundaries
+
+1. **API contract** (`packages/api-contract`, mirrors `docs/04-Architecture/56`) — the client depends only on this, never on storage.
+2. **Storage Adapter** (`apps/backend/src/adapters/StorageAdapter.ts`, per `docs/04-Architecture/52` §5) — services depend on this interface; the v1 `SheetsStorageAdapter` is the only code that touches Google Sheets. A future Postgres/Supabase adapter is a new folder, not a rewrite.
 
 ## Architecture map (one line)
 

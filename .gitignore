@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.astro/
+apps/web/dist/
+apps/web/src/env.d.ts
+apps/backend/dist/
+
+# Environment & secrets (docs/04-Architecture/60 BR-3, docs/09-Security/124)
+.env
+.env.*
+!.env.example
+.clasp.json
+apps/backend/.clasp.json
+.clasprc.json
+
+# Test / coverage output
+coverage/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Large media is never committed — kept in private Drive (docs/04-Architecture/54)
+*.mp4
+*.mov

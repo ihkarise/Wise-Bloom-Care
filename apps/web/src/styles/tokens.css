@@ -1,0 +1,90 @@
+/*
+ * Semantic design tokens (docs/03-UX/35 §3, 37 §5, 38 §4).
+ *
+ * Two layers: primitives (raw values) → semantic aliases the UI consumes.
+ * Components reference ONLY the semantic tokens (via Tailwind utilities), never
+ * primitives — so theming and accessibility fixes happen in one place (35 BR-1).
+ * Values below are the proposed palette (37 §4, [PROPOSED]); they must pass
+ * WCAG 2.2 AA contrast before ship (37 §7). Dark theme redefines primitives
+ * behind the same semantic tokens (35 §10).
+ */
+
+:root {
+  /* Primitives — warm neutrals, gentle sage, calm sky, reserved alert (37 §4). */
+  --neutral-50: #faf8f5;
+  --neutral-100: #f2ede7;
+  --neutral-200: #e5dfd8;
+  --neutral-600: #6b625b;
+  --neutral-900: #1f1b18;
+  --white: #ffffff;
+  --sage-600: #3e6b4f;
+  --sage-700: #315940;
+  --sky-600: #2f5d80;
+  --amber-600: #a5701c;
+  --alert-600: #b3261e;
+
+  /* Semantic colour tokens (37 §5). */
+  --color-surface: var(--neutral-50);
+  --color-surface-raised: var(--white);
+  --color-text-primary: var(--neutral-900);
+  --color-text-secondary: var(--neutral-600);
+  --color-action: var(--sage-600);
+  --color-action-hover: var(--sage-700);
+  --color-link: var(--sky-600);
+  --color-positive: var(--sage-600);
+  --color-caution: var(--amber-600); /* non-emergency caution only (37 §6) */
+  --color-alert-emergency: var(--alert-600); /* RESERVED for curated emergencies (37 BR-2) */
+  --color-focus: var(--sky-600);
+  --color-border: var(--neutral-200);
+
+  /* Radius — soft, warm, non-clinical (35 §5). */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Typography (38 §3–4). Humanist sans with a system fallback stack. */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --text-display-size: 2rem; /* 32 / 40 */
+  --text-display-lh: 2.5rem;
+  --text-h1-size: 1.5rem; /* 24 / 32 */
+  --text-h1-lh: 2rem;
+  --text-h2-size: 1.25rem; /* 20 / 28 */
+  --text-h2-lh: 1.75rem;
+  --text-h3-size: 1.125rem; /* 18 / 26 */
+  --text-h3-lh: 1.625rem;
+  --text-body-size: 1rem; /* 16 / 26 */
+  --text-body-lh: 1.625rem;
+  --text-small-size: 0.875rem; /* 14 / 22 */
+  --text-small-lh: 1.375rem;
+  --text-caption-size: 0.75rem; /* 12 / 18 */
+  --text-caption-lh: 1.125rem;
+}
+
+/* Dark theme (future; additive via the same semantic tokens — 35 §10, 37 §8). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: #1a1714;
+    --color-surface-raised: #221e1a;
+    --color-text-primary: #f2ede7;
+    --color-text-secondary: #b8afa6;
+    --color-action: #7fb08f;
+    --color-action-hover: #93c0a2;
+    --color-link: #8fb8d6;
+    --color-positive: #7fb08f;
+    --color-caution: #d0a75a;
+    --color-alert-emergency: #e06a63;
+    --color-focus: #8fb8d6;
+    --color-border: #3a332e;
+  }
+}
+
+/* Honour reduced-motion globally (35 §6, docs/03-UX/40). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

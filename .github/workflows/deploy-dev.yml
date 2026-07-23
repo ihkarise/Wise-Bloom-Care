@@ -1,0 +1,61 @@
+name: Deploy (dev)
+
+# Dry-run-capable dev deployment pipeline (docs/20-Implementation/205 Task 9,
+# §8; docs/04-Architecture/60 §3–5). Builds the frontend artifact and pushes the
+# Apps Script backend to the isolated DEV environment via clasp.
+#
+# Runs only on manual dispatch and only when the required DEV secrets are
+# configured, so it never blocks PR CI and never needs secrets in the repo
+# (docs/04-Architecture/60 BR-3). Secrets (set in the repo's `dev` environment):
+#   CLASPRC_JSON   — clasp OAuth credentials (~/.clasprc.json contents)
+#   DEV_SCRIPT_ID  — the dev Apps Script project id
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-dev:
+    name: build frontend + clasp push (dev)
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend
+        run: pnpm --filter @wise-bloom/web build
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dev-build
+          path: apps/web/dist
+          if-no-files-found: error
+
+      - name: Verify DEV secrets present
+        run: |
+          if [ -z "${{ secrets.DEV_SCRIPT_ID }}" ] || [ -z "${{ secrets.CLASPRC_JSON }}" ]; then
+            echo "DEV_SCRIPT_ID / CLASPRC_JSON not configured — skipping GAS push (dry run)."
+            echo "SKIP_GAS=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Configure clasp for dev
+        if: ${{ env.SKIP_GAS != '1' }}
+        run: |
+          printf '%s' '${{ secrets.CLASPRC_JSON }}' > "$HOME/.clasprc.json"
+          printf '{"scriptId":"%s","rootDir":"src"}' '${{ secrets.DEV_SCRIPT_ID }}' > apps/backend/.clasp.json
+
+      - name: Push backend to dev Apps Script
+        if: ${{ env.SKIP_GAS != '1' }}
+        working-directory: apps/backend
+        run: npx --yes @google/clasp@2.4.2 push --force
