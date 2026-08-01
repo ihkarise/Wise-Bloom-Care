@@ -276,7 +276,7 @@ Executed on the final branch state in this environment. Every result below was o
 | Boundary lint rules              | ✅ Pass — repo-wide clean, meta-tests trip on planted violations        |
 | Secret scan                      | ✅ Pass — no credentials; only synthetic test fixtures                  |
 | Frozen-doc check                 | ✅ Pass — `docs/` unmodified across the whole branch                    |
-| Commit-message lint              | ✅ Pass — 15/15 commits conform                                         |
+| Commit-message lint              | ✅ Pass — every commit on the branch conforms                           |
 
 ---
 
