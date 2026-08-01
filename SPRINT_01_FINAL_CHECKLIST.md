@@ -103,7 +103,7 @@ environment on the final branch state — results are observed, not assumed.
 - [x] **No debug logging** — the only two `console` calls are the deliberate structured-log sinks in
       `lib/logging.ts` and `main.ts`, which emit allowlisted, PHI-stripped JSON.
 - [x] **No commented-out code.**
-- [x] **Commit history clean** — all 15 commits on the branch pass `commitlint` against the repo's
+- [x] **Commit history clean** — every commit on the branch passes `commitlint` against the repo's
       extended Conventional-Commits type set; no fixups, no merge noise.
 
 ## Documentation

@@ -26,7 +26,7 @@ The tree is clean and the build is reproducible. Nothing in it is accidental.
 | `TODO` / `FIXME` / `XXX` / `HACK`  | Zero, repo-wide                                                                                |
 | Commented-out code                 | None                                                                                           |
 | Debug logging                      | None. Two `console` calls are deliberate structured-log sinks                                  |
-| Commit history                     | 15 commits, all passing `commitlint`, no fixups or merge noise                                 |
+| Commit history                     | Every commit passes `commitlint`; no fixups or merge noise                                     |
 | Merge conflicts                    | None — fast-forward descendant of `main`                                                       |
 | Dependency conflicts / PM warnings | None under pnpm 10.33.0 / Node 22.22.2                                                         |
 
