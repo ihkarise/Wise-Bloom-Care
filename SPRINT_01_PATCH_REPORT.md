@@ -1,12 +1,12 @@
 # Sprint 01 Patch Report — GAS Authentication Transport
 
-| Field | Value |
-| --- | --- |
-| Patch | Frontend to Google Apps Script authentication transport compatibility |
-| Branch | `claude/wise-bloom-sprint-01-ru67bn` |
-| Base | `main` @ `ced4644` |
-| Scope | Bug fix only — no new features, no architecture change, no API-contract change |
-| Status | Fixed and validated (CI green) |
+| Field  | Value                                                                          |
+| ------ | ------------------------------------------------------------------------------ |
+| Patch  | Frontend to Google Apps Script authentication transport compatibility          |
+| Branch | `claude/wise-bloom-sprint-01-ru67bn`                                           |
+| Base   | `main` @ `ced4644`                                                             |
+| Scope  | Bug fix only — no new features, no architecture change, no API-contract change |
+| Status | Fixed and validated (CI green)                                                 |
 
 ## 1. Problem
 
@@ -52,12 +52,12 @@ boundary, business rule, or the API contract:
 
 ## 4. Files Changed
 
-| File | Change |
-| --- | --- |
-| `apps/web/src/api/client.ts` | Attach the bearer token as a `token` query parameter (the GAS-readable mechanism), in addition to keeping the existing `Authorization` header. |
-| `apps/web/tests/api/client.test.ts` | Assert the token rides as a `token=` query param when authenticated, and is absent for public/unauthenticated requests. |
-| `apps/backend/src/main.ts` | Export the existing pure `toApiRequest` translation function (no logic change) so the entry-point seam is directly testable. |
-| `apps/backend/tests/main.test.ts` | New: exercises the real `doGet`/`doPost` to `ApiRequest` translation, proving the token is read from the query param and kept out of the domain query bag. |
+| File                                | Change                                                                                                                                                     |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/src/api/client.ts`        | Attach the bearer token as a `token` query parameter (the GAS-readable mechanism), in addition to keeping the existing `Authorization` header.             |
+| `apps/web/tests/api/client.test.ts` | Assert the token rides as a `token=` query param when authenticated, and is absent for public/unauthenticated requests.                                    |
+| `apps/backend/src/main.ts`          | Export the existing pure `toApiRequest` translation function (no logic change) so the entry-point seam is directly testable.                               |
+| `apps/backend/tests/main.test.ts`   | New: exercises the real `doGet`/`doPost` to `ApiRequest` translation, proving the token is read from the query param and kept out of the domain query bag. |
 
 Commits (Conventional Commits, on the sprint branch):
 
@@ -84,14 +84,14 @@ just router-level behaviour.
 Verified via GitHub Actions CI run #8 (commit `7af6822`) — Success. This browser-only
 review environment cannot run `pnpm` locally, so CI is the executed source of truth.
 
-| Gate | Result |
-| --- | --- |
-| `pnpm lint` + `pnpm -r lint` | Pass (7/7 packages) |
-| `pnpm -r typecheck` | Pass |
-| `pnpm -r test` | Pass — 161 tests, 26 files (was 158/25): backend 119, web 28, cross-app 5, lint-rules 9 |
-| `pnpm -r build` | Pass |
-| Secret scanning (gitleaks) | Pass — no leaks detected |
-| `pnpm format:check` | Not executed — not wired into CI and not runnable in this browser-only environment; new/edited lines were hand-conformed to the repo Prettier config (printWidth 100, single quotes, semicolons, trailing commas). See section 9. |
+| Gate                         | Result                                                                                                                                                                                                                            |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint` + `pnpm -r lint` | Pass (7/7 packages)                                                                                                                                                                                                               |
+| `pnpm -r typecheck`          | Pass                                                                                                                                                                                                                              |
+| `pnpm -r test`               | Pass — 161 tests, 26 files (was 158/25): backend 119, web 28, cross-app 5, lint-rules 9                                                                                                                                           |
+| `pnpm -r build`              | Pass                                                                                                                                                                                                                              |
+| Secret scanning (gitleaks)   | Pass — no leaks detected                                                                                                                                                                                                          |
+| `pnpm format:check`          | Not executed — not wired into CI and not runnable in this browser-only environment; new/edited lines were hand-conformed to the repo Prettier config (printWidth 100, single quotes, semicolons, trailing commas). See section 9. |
 
 New backend test observed in the CI log: `tests/main.test.ts (3 tests)` passed.
 
