@@ -13,11 +13,13 @@ GitHub issues for a later sprint instead.
 Labels use the repo's existing vocabulary plus the priority scale `P1` (next sprint) → `P3` (nice
 to have).
 
-**Status:** these are ready to file; they have not been created on GitHub yet.
+**Status:** all 11 have been filed — GitHub issues **#5–#15**. Milestones are named per item below
+but were not applied via the API (they do not exist in the repository yet); create them and assign
+before Sprint 02 planning.
 
 ---
 
-## 1. Equalise PBKDF2 timing on the unknown-email login path
+## 1. Equalise PBKDF2 timing on the unknown-email login path — [#5](https://github.com/ihkarise/Wise-Bloom-Care/issues/5)
 
 | Field     | Value                                                                      |
 | --------- | -------------------------------------------------------------------------- |
@@ -61,7 +63,7 @@ commit.
 
 ---
 
-## 2. Compensating rollback for the non-transactional registration flow
+## 2. Compensating rollback for the non-transactional registration flow — [#6](https://github.com/ihkarise/Wise-Bloom-Care/issues/6)
 
 | Field     | Value                                                                            |
 | --------- | -------------------------------------------------------------------------------- |
@@ -100,7 +102,7 @@ decisions.
 
 ---
 
-## 3. Back the rate limiter with CacheService so limits survive GAS invocations
+## 3. Back the rate limiter with CacheService so limits survive GAS invocations — [#7](https://github.com/ihkarise/Wise-Bloom-Care/issues/7)
 
 | Field     | Value                                                                       |
 | --------- | --------------------------------------------------------------------------- |
@@ -139,7 +141,7 @@ and tests, and touches the composition root's lifetime model.
 
 ---
 
-## 4. Move the bearer session out of localStorage when the deployment model allows
+## 4. Move the bearer session out of localStorage when the deployment model allows — [#8](https://github.com/ihkarise/Wise-Bloom-Care/issues/8)
 
 | Field     | Value                                                                                     |
 | --------- | ----------------------------------------------------------------------------------------- |
@@ -174,7 +176,7 @@ when the backend moves off Apps Script or gains a same-origin proxy.
 
 ---
 
-## 5. Serialise Sheets writes behind LockService
+## 5. Serialise Sheets writes behind LockService — [#9](https://github.com/ihkarise/Wise-Bloom-Care/issues/9)
 
 | Field     | Value                                                                                                            |
 | --------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -211,7 +213,7 @@ cleanup pass (commit `chore: clean sprint 01 release`); this issue tracks closin
 
 ---
 
-## 6. Wire automated accessibility checks into CI
+## 6. Wire automated accessibility checks into CI — [#10](https://github.com/ihkarise/Wise-Bloom-Care/issues/10)
 
 | Field     | Value                                                                                        |
 | --------- | -------------------------------------------------------------------------------------------- |
@@ -243,7 +245,7 @@ CI job, i.e. tooling scope rather than sprint scope.
 
 ---
 
-## 7. Add test-coverage measurement to CI
+## 7. Add test-coverage measurement to CI — [#11](https://github.com/ihkarise/Wise-Bloom-Care/issues/11)
 
 | Field     | Value                                                                |
 | --------- | -------------------------------------------------------------------- |
@@ -275,7 +277,7 @@ monorepo.
 
 ---
 
-## 8. Generate OpenAPI / JSON Schema from the API contract
+## 8. Generate OpenAPI / JSON Schema from the API contract — [#12](https://github.com/ihkarise/Wise-Bloom-Care/issues/12)
 
 | Field     | Value                                                               |
 | --------- | ------------------------------------------------------------------- |
@@ -307,7 +309,7 @@ planned direction rather than a new idea.
 
 ---
 
-## 9. Type-check the shared config package
+## 9. Type-check the shared config package — [#13](https://github.com/ihkarise/Wise-Bloom-Care/issues/13)
 
 | Field     | Value                                                  |
 | --------- | ------------------------------------------------------ |
@@ -338,7 +340,7 @@ adding a local declaration — a dependency change, which is out of scope for a 
 
 ---
 
-## 10. Lint Astro files
+## 10. Lint Astro files — [#14](https://github.com/ihkarise/Wise-Bloom-Care/issues/14)
 
 | Field     | Value                                                     |
 | --------- | --------------------------------------------------------- |
@@ -367,7 +369,7 @@ the boundary rules would need verification against the Astro AST.
 
 ---
 
-## 11. Give the landing page a route into the product
+## 11. Give the landing page a route into the product — [#15](https://github.com/ihkarise/Wise-Bloom-Care/issues/15)
 
 | Field     | Value                                                                                         |
 | --------- | --------------------------------------------------------------------------------------------- |

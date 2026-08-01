@@ -240,21 +240,23 @@ sprint's own reports before this review. That is the healthy pattern.
 ## 9. Issues Created
 
 11 items are specified in `ISSUES_TO_CREATE.md`, each with title, priority, milestone, labels,
-description, and acceptance criteria. **They are prepared but not yet filed on GitHub.**
+description, and acceptance criteria. **All 11 have been filed as GitHub issues #5–#15.** Milestones
+are named per item but not applied — they do not exist in the repository yet and need creating before
+Sprint 02 planning.
 
-| #   | Title                                                    | Priority | Milestone      |
-| --- | -------------------------------------------------------- | -------- | -------------- |
-| 1   | Equalise PBKDF2 timing on the unknown-email login path   | P1       | Hardening      |
-| 2   | Compensating rollback for non-transactional registration | P1       | Sprint 02      |
-| 3   | Back the rate limiter with CacheService                  | P1       | Hardening      |
-| 4   | Move the bearer session out of `localStorage`            | P2       | v2 — Migration |
-| 5   | Serialise Sheets writes behind `LockService`             | P2       | Hardening      |
-| 6   | Wire automated accessibility checks into CI              | P2       | Hardening      |
-| 7   | Add test-coverage measurement to CI                      | P2       | Hardening      |
-| 8   | Generate OpenAPI / JSON Schema from the API contract     | P3       | Sprint 03      |
-| 9   | Type-check the shared config package                     | P3       | Sprint 02      |
-| 10  | Lint Astro files                                         | P3       | Sprint 02      |
-| 11  | Give the landing page a route into the product           | P3       | Sprint 02      |
+| #   | Issue                                                                   | Priority | Milestone      |
+| --- | ----------------------------------------------------------------------- | -------- | -------------- |
+| 1   | [#5](../../issues/5) Equalise PBKDF2 timing on unknown-email login      | P1       | Hardening      |
+| 2   | [#6](../../issues/6) Compensating rollback for registration             | P1       | Sprint 02      |
+| 3   | [#7](../../issues/7) Back the rate limiter with CacheService            | P1       | Hardening      |
+| 4   | [#8](../../issues/8) Move the session out of `localStorage`             | P2       | v2 — Migration |
+| 5   | [#9](../../issues/9) Serialise Sheets writes behind `LockService`       | P2       | Hardening      |
+| 6   | [#10](../../issues/10) Wire automated accessibility checks into CI      | P2       | Hardening      |
+| 7   | [#11](../../issues/11) Add test-coverage measurement to CI              | P2       | Hardening      |
+| 8   | [#12](../../issues/12) Generate OpenAPI / JSON Schema from the contract | P3       | Sprint 03      |
+| 9   | [#13](../../issues/13) Type-check the shared config package             | P3       | Sprint 02      |
+| 10  | [#14](../../issues/14) Lint Astro files                                 | P3       | Sprint 02      |
+| 11  | [#15](../../issues/15) Give the landing page a route into the product   | P3       | Sprint 02      |
 
 ---
 

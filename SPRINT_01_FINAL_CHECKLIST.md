@@ -131,7 +131,7 @@ environment on the final branch state — results are observed, not assumed.
       upgrade notes, developer notes.
 - [x] `SPRINT_01_FINAL_REVIEW.md` — repository health, quality, compliance, risk, overall grade.
 - [x] `ISSUES_TO_CREATE.md` — 11 deferred items, each with priority, milestone, labels,
-      description, and acceptance criteria.
+      description, and acceptance criteria. All 11 filed as GitHub issues **#5–#15**.
 - [x] `SPRINT_01_FINAL_CHECKLIST.md` — this document.
 
 ## Merge readiness
@@ -146,7 +146,8 @@ environment on the final branch state — results are observed, not assumed.
 
 Not part of this PR, but required to close Sprint 01 out:
 
-1. File the 11 issues in `ISSUES_TO_CREATE.md` and assign them to their milestones.
+1. Create the `Sprint 02`, `Sprint 03`, `Hardening`, and `v2 — Migration` milestones and assign
+   issues #5–#15 to them (the issues are filed; the milestones do not exist yet).
 2. Tag the merge commit `v0.1.0-sprint-01`.
 3. Configure `SPREADSHEET_ID` and `EMAIL_PEPPER` Script Properties before any dev deployment —
    the backend refuses to start without them (`SPRINT_01_RELEASE_NOTES.md` → Upgrade Notes).
