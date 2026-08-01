@@ -71,6 +71,14 @@ export class ApiClient {
 
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (this.token) {
+      // Google Apps Script Web Apps (doGet/doPost) cannot read custom request
+      // headers - only query/form params reach the entry point
+      // (docs/04-Architecture/53 section 4). The bearer token is therefore sent
+      // as a `token` query param, the mechanism the backend actually reads
+      // (apps/backend/src/main.ts). The Authorization header is kept too: it is
+      // harmless to GAS and lets a future non-GAS backend read the bearer token
+      // the standard way (docs/04-Architecture/57).
+      url.searchParams.set('token', this.token);
       headers['Authorization'] = `Bearer ${this.token}`;
     }
     if (init.body !== undefined) {
