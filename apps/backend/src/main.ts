@@ -53,7 +53,8 @@ function buildHandler(): (request: ApiRequest) => ApiResponse {
   return buildApp({ storage, logger, emailPepper }).handle;
 }
 
-function toApiRequest(
+/** Exported for entry-point translation tests (apps/backend/tests/main.test.ts). */
+export function toApiRequest(
   method: HttpMethod,
   event: GoogleAppsScript.Events.DoGet | GoogleAppsScript.Events.DoPost,
 ): ApiRequest {
