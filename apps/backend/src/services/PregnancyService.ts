@@ -75,7 +75,7 @@ export class PregnancyService {
     return episode;
   }
 
-  /** All episodes for a maternal record, most-recently-created first (docs/06-Modules/82 FR-6, multi-episode support). */
+  /** All episodes for a maternal record, in creation order (docs/06-Modules/82 FR-6, multi-episode support). */
   listEpisodes(maternalId: UUID): PregnancyEpisode[] {
     return this.storage.query('PregnancyEpisode', { maternal_id: maternalId });
   }

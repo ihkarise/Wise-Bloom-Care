@@ -95,7 +95,7 @@ export type MilestoneStatus = 'achieved' | 'not_yet' | 'not_sure';
 /** Immunization dose status (docs/05-Data/72 §7). */
 export type VaccinationStatus = 'given' | 'skipped' | 'deferred' | 'scheduled';
 
-/** Appointment status (docs/05-Data/54 §appointments). */
+/** Appointment status (docs/04-Architecture/54 §appointments). */
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'missed';
 
 /** Medical content type — safety-critical (docs/02-Research/28, docs/05-Data/72 §9). */
@@ -226,7 +226,7 @@ export interface Vital {
   measured_at: ISODateTime;
 }
 
-/** WHO growth measurement (docs/05-Data/70, 54 §growth_measurements). */
+/** WHO growth measurement (docs/05-Data/70, docs/04-Architecture/54 §growth_measurements). */
 export interface GrowthMeasurement {
   gm_id: UUID;
   child_id: UUID;
@@ -246,7 +246,7 @@ export interface Milestone {
   observed_at: ISODateTime;
 }
 
-/** Immunization dose (docs/05-Data/70, 54 §vaccinations). */
+/** Immunization dose (docs/05-Data/70, docs/04-Architecture/54 §vaccinations). */
 export interface Vaccination {
   vax_id: UUID;
   child_id: UUID;

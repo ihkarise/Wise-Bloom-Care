@@ -1,13 +1,19 @@
 /**
  * Request controller / router (docs/04-Architecture/52 §4).
  *
- * Wires the cross-cutting request pipeline — authenticate → rate-limit →
- * validate → dispatch — that every endpoint passes through. Authentication is
- * real as of Sprint 01: `resolveActor` turns a bearer token into an
- * `AuthenticatedActor` via SessionService (docs/04-Architecture/57 §6), fail
- * closed on anything invalid (52 §8). A small set of routes — register/login —
- * are public (no session exists yet) and are dispatched with a `null` actor.
- * The contract these route to is docs/04-Architecture/56.
+ * Wires the cross-cutting request pipeline — authenticate → dispatch — that
+ * every endpoint passes through. Authentication is real as of Sprint 01:
+ * `resolveActor` turns a bearer token into an `AuthenticatedActor` via
+ * SessionService (docs/04-Architecture/57 §6), fail closed on anything invalid
+ * (52 §8). A small set of routes — register/login — are public (no session
+ * exists yet) and are dispatched with a `null` actor. The contract these route
+ * to is docs/04-Architecture/56.
+ *
+ * The other two pipeline concerns are deliberately not router-level stages:
+ * rate limiting is endpoint-specific and lives in AuthService behind an
+ * injected `RateLimiter` (docs/09-Security/120), and payload validation is
+ * per-endpoint and lives in each controller (docs/05-Data/73). The router
+ * owns only what is genuinely common to every route.
  */
 
 import { ENDPOINTS, type ErrorCode, type HttpMethod } from '@wise-bloom/api-contract';
@@ -115,16 +121,6 @@ export function createRouter(deps: RouterDeps): (request: ApiRequest) => ApiResp
     }
   }
 
-  /** Rate-limit stub — endpoint-specific limits (register/login) live in AuthService (docs/09-Security/120). */
-  function enforceRateLimit(_request: ApiRequest): void {
-    // No-op here; see AuthService's injected RateLimiter for the auth endpoints.
-  }
-
-  /** Input-validation stub — structural/plausibility checks land per endpoint (docs/05-Data/73). */
-  function validate(_request: ApiRequest): void {
-    // No-op here; each controller validates its own payload before calling a service.
-  }
-
   function dispatch(
     request: ApiRequest,
     routeKey: string,
@@ -142,8 +138,6 @@ export function createRouter(deps: RouterDeps): (request: ApiRequest) => ApiResp
     const routeKey = `${request.method} ${request.path}`;
     try {
       const actor = authenticate(request, routeKey);
-      enforceRateLimit(request);
-      validate(request);
       return dispatch(request, routeKey, actor);
     } catch (error) {
       if (error instanceof ApiException) {
