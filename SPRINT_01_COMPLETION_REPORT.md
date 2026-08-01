@@ -163,4 +163,9 @@ No formal coverage-percentage tool is wired into this monorepo; coverage is trac
 
 ---
 
-**Final commit**: `Sprint 01 Complete`
+**Report commit**: `docs: sprint 01 complete`
+
+**Superseded counts**: the validation totals in §6/§7 (158 tests / 25 files) are those of this
+report's commit. The GAS auth-transport patch that followed added 3 tests and 1 file — see
+`SPRINT_01_PATCH_REPORT.md` — and the final cleanup pass added none. The merge-time totals are
+**161 tests / 26 files**, recorded in `SPRINT_01_FINAL_REVIEW.md`.
