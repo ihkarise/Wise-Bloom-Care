@@ -28,6 +28,10 @@ describe('ApiClient', () => {
 
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toContain('/v1/timeline');
+    // Google Apps Script Web Apps cannot read custom headers, so the bearer
+    // token must also ride as a query param the entry point reads
+    // (apps/backend/src/main.ts). Regression guard for the GAS auth transport.
+    expect(url).toContain('token=synthetic-token');
     expect((init.headers as Record<string, string>)['Authorization']).toBe(
       'Bearer synthetic-token',
     );
@@ -41,8 +45,10 @@ describe('ApiClient', () => {
     });
 
     await client.request('/auth/login', { method: 'POST', body: { email: 'a', password: 'b' } });
-    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect((init.headers as Record<string, string>)['Authorization']).toBeUndefined();
+    // A public (unauthenticated) route must not attach a token query param either.
+    expect(url).not.toContain('token=');
   });
 
   it('attaches an Idempotency-Key to every write, even with no body', async () => {
