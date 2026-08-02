@@ -7,7 +7,7 @@ environment on the final branch state — results are observed, not assumed.
 | ------------ | --------------------------------------- |
 | Branch       | `claude/sprint-01-final-cleanup-wt26v3` |
 | Base         | `main` @ `ced4644` (Sprint 00 merged)   |
-| Proposed tag | `v0.1.0-sprint-01`                      |
+| Proposed tag | `v1.3.0-sprint-01`                      |
 | Verified     | Full local run of all six gates         |
 | Overall      | **Ready — PR and merge**                |
 
@@ -138,7 +138,7 @@ environment on the final branch state — results are observed, not assumed.
 
 - [x] **PR ready** — `PR_DESCRIPTION.md` is prepared and follows the repository's PR template.
 - [x] **Merge ready** — no conflicts, all gates green, no blocking issues open against this branch.
-- [x] **Tag ready** — `v0.1.0-sprint-01` proposed. Apply after merge, on the merge commit.
+- [x] **Tag ready** — `v1.3.0-sprint-01` proposed. Apply after merge, on the merge commit.
 
 ---
 
