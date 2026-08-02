@@ -1,13 +1,12 @@
 ## Sprint 01 Final Release Package
 
-| Field | Value |
-| --- | --- |
-| Sprint | 01 — Identity, family graph, PregnancyEpisode, timeline foundation |
-| Branch reviewed | `claude/sprint-01-final-cleanup-wt26v3` |
-| Base | `main` @ `ced4644` (Sprint 00 merged) |
-| Review type | Release-manager review: repository hygiene and process correction only |
-| Validation method | GitHub Actions (this environment has no terminal/shell access) |
-| Decision | **GO WITH NOTES** |
+**Decision: GO WITH NOTES**
+
+- Sprint: 01 — Identity, family graph, PregnancyEpisode, timeline foundation
+- Branch reviewed: `claude/sprint-01-final-cleanup-wt26v3`
+- Base: `main` @ `ced4644` (Sprint 00 merged)
+- Review type: release-manager review — repository hygiene and process correction only
+- Validation method: GitHub Actions (this environment has no terminal/shell access)
 
 ### Executive Summary
 
@@ -15,7 +14,7 @@ Sprint 01 delivers authentication, the family/maternal record graph, PregnancyEp
 
 ### Repository Health
 
-The working tree is clean. `git`-level comparison of `main...claude/sprint-01-final-cleanup-wt26v3` shows 19 commits (23 after this review's own documentation commits) and 96 files changed, and GitHub reports the branch as "Able to merge" with no conflicts. No accidental files, no generated build artifacts, no debug logging beyond the two deliberate structured-log sinks, and no commented-out code were found in the diff or in the repository root listing. `gitleaks` secret scanning is a required step in CI and reports no leaks on the branch's latest run; the only credential-shaped strings in the repository are synthetic test fixtures and a `.clasp.json.example` placeholder template. Root-level hygiene files (`.gitignore`, `.prettierignore`, `.lintstagedrc.json`, `.nvmrc`) are present and consistent with the tooling described in the README.
+The working tree is clean. `git`-level comparison of `main...claude/sprint-01-final-cleanup-wt26v3` shows 19 commits (23+ after this review's own documentation commits) and 96 files changed, and GitHub reports the branch as "Able to merge" with no conflicts. No accidental files, no generated build artifacts, no debug logging beyond the two deliberate structured-log sinks, and no commented-out code were found in the diff or in the repository root listing. `gitleaks` secret scanning is a required step in CI and reports no leaks on the branch's runs; the only credential-shaped strings in the repository are synthetic test fixtures and a `.clasp.json.example` placeholder template. Root-level hygiene files (`.gitignore`, `.prettierignore`, `.lintstagedrc.json`, `.nvmrc`) are present and consistent with the tooling described in the README.
 
 ### Architecture Compliance
 
@@ -31,7 +30,7 @@ The repository's own reports state 161 tests across 26 files, all passing, none 
 
 ### CI Summary
 
-**Validation based on the latest successful GitHub Actions run** (this review environment has no terminal/shell access, so no `pnpm` command was executed locally by this reviewer). The latest run on the branch head commit (`393fe98` at the time of the prior review pass; the branch head is now the documentation commits added by this review) — CI run #13 — shows **Success** for both jobs: "lint · format · type-check · test · build" and "secret scanning" (gitleaks: no leaks detected). `.github/workflows/ci.yml` runs, in order: install (frozen lockfile) -> lint -> format check -> type-check -> test -> build, plus a parallel secret-scanning job. `pnpm format:check` is present as its own step between lint and type-check, addressing the gap that let an unformatted file land on a green build earlier in the sprint. Two earlier runs in the same push sequence show as cancelled, which is the expected effect of the workflow's `concurrency: cancel-in-progress` setting superseding in-flight runs on a new push, not a failure. The branch list in GitHub shows "2/2" checks passing.
+**Validation based on the latest successful GitHub Actions run** (this review environment has no terminal/shell access, so no `pnpm` command was executed locally by this reviewer). The most recent run on the pre-existing Sprint 01 code (commit `393fe98`, CI run #13) shows **Success** for both jobs: "lint · format · type-check · test · build" and "secret scanning" (gitleaks: no leaks detected). `.github/workflows/ci.yml` runs, in order: install (frozen lockfile) -> lint -> format check -> type-check -> test -> build, plus a parallel secret-scanning job. `pnpm format:check` is present as its own step between lint and type-check, addressing the gap that let an unformatted file land on a green build earlier in the sprint. This review's own documentation-only commits triggered several CI runs; three failed `format:check` because three newly-added markdown files used table formatting that did not match Prettier's output, and were corrected in follow-up commits on this same branch — a full log of that correction is in the branch's commit history. Two of the earlier runs in the sequence also show as cancelled, which is the expected effect of the workflow's `concurrency: cancel-in-progress` setting superseding in-flight runs on a new push, not a failure.
 
 ### Security Summary
 
@@ -51,11 +50,19 @@ The repository has zero tags and zero releases. All four tags required by the re
 
 ### Recommended PR Branch
 
-`claude/sprint-01-final-cleanup-wt26v3` -> `main`. This branch contains the full Sprint 01 feature set, the GAS auth-transport patch, the cleanup pass that fixed eight objective defects, the CI format-check gate, and this review's documentation corrections — 23 commits ahead of `main`, 0 commits behind, no conflicts. The alternative branch, `claude/wise-bloom-sprint-01-ru67bn`, contains only the pre-patch, pre-cleanup Sprint 01 work (13 commits) and should not be used as the PR source.
+`claude/sprint-01-final-cleanup-wt26v3` -> `main`. This branch contains the full Sprint 01 feature set, the GAS auth-transport patch, the cleanup pass that fixed eight objective defects, the CI format-check gate, and this review's documentation corrections — more than 19 commits ahead of `main`, 0 commits behind, no conflicts. The alternative branch, `claude/wise-bloom-sprint-01-ru67bn`, contains only the pre-patch, pre-cleanup Sprint 01 work (13 commits) and should not be used as the PR source.
 
 ### Release Checklist
 
-Architecture and implementation-planning docs untouched: confirmed. Branch merges cleanly with no conflicts: confirmed. Latest GitHub Actions run green (lint, format, type-check, test, build, secret scan): confirmed. No secrets, no accidental files, no dead/commented-out/debug code: confirmed. All 11 follow-up items filed as GitHub issues with priority and acceptance criteria: confirmed. Release documentation (`PR_DESCRIPTION.md`, `SPRINT_01_COMPLETION_REPORT.md`, `SPRINT_01_PATCH_REPORT.md`, `SPRINT_01_RELEASE_NOTES.md`, `SPRINT_01_FINAL_CHECKLIST.md`, `SPRINT_01_FINAL_REVIEW.md`, `README.md`) reviewed for factual accuracy and internal consistency: confirmed, one stale tag reference corrected. Release tags: not created — see `MISSING_TAGS.md`. Milestones: not created — documented as a post-merge action. PR: not opened, per instruction.
+- Architecture and implementation-planning docs untouched: confirmed.
+- Branch merges cleanly with no conflicts: confirmed.
+- Latest GitHub Actions run on the Sprint 01 code green (lint, format, type-check, test, build, secret scan): confirmed.
+- No secrets, no accidental files, no dead/commented-out/debug code: confirmed.
+- All 11 follow-up items filed as GitHub issues with priority and acceptance criteria: confirmed.
+- Release documentation (`PR_DESCRIPTION.md`, `SPRINT_01_COMPLETION_REPORT.md`, `SPRINT_01_PATCH_REPORT.md`, `SPRINT_01_RELEASE_NOTES.md`, `SPRINT_01_FINAL_CHECKLIST.md`, `SPRINT_01_FINAL_REVIEW.md`, `README.md`) reviewed for factual accuracy and internal consistency: confirmed, one stale tag reference corrected in two files.
+- Release tags: not created — see `MISSING_TAGS.md`.
+- Milestones: not created — documented as a post-merge action.
+- PR: not opened, per instruction.
 
 ### Final Recommendation
 
