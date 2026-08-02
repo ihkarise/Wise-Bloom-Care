@@ -6,7 +6,7 @@
 | Source                | `docs/20-Implementation/206-SPRINT_01.md`                          |
 | Architecture Baseline | `v1.0.0-Architecture` (FROZEN)                                     |
 | Base                  | `main` @ `ced4644` (Sprint 00 merged)                              |
-| Proposed tag         | `v1.3.0-sprint-01`                       |
+| Proposed tag          | `v1.3.0-sprint-01`                                                 |
 | Status                | Ready for PR and merge                                             |
 
 Sprint 01 turns Sprint 00's empty-but-wired foundation into a product a real user can register for,
