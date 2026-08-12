@@ -17,7 +17,10 @@ logs — not carried over from an earlier report.
 
 A correction pass following this review added one documentation-only commit on top of `65bf7b0`
 (stale tag references, refreshed figures, this document, and the release-package rename). It
-changed no application code, tests, CI configuration, or frozen documentation.
+changed no application code, tests, CI configuration, or frozen documentation. That commit was
+independently verified by **CI run #23 on `c5516ce` — SUCCESS across lint, format, type-check,
+test, build, and gitleaks** — and by a local run of all six gates. Run numbers advance with every
+push; the branch's latest run is authoritative, and both #22 and #23 are green.
 
 ---
 
