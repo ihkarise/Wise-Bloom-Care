@@ -198,6 +198,30 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
+  tests:
+    devDependencies:
+      '@types/google-apps-script':
+        specifier: ^1.0.99
+        version: 1.0.100
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.20.1
+      '@wise-bloom/api-contract':
+        specifier: workspace:*
+        version: link:../packages/api-contract
+      '@wise-bloom/domain-types':
+        specifier: workspace:*
+        version: link:../packages/domain-types
+      eslint:
+        specifier: ^9.17.0
+        version: 9.39.5(jiti@2.7.0)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.1)(jsdom@25.0.1)
+
   tools/lint-rules:
     devDependencies:
       '@types/estree':

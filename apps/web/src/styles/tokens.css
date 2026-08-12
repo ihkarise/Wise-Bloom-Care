@@ -7,7 +7,16 @@
  * Values below are the proposed palette (37 §4, [PROPOSED]); they must pass
  * WCAG 2.2 AA contrast before ship (37 §7). Dark theme redefines primitives
  * behind the same semantic tokens (35 §10).
+ *
+ * `applyBaseStyles: false` (astro.config.mjs) deliberately skips Tailwind's
+ * preflight/reset, since the semantic tokens above are the single source of
+ * visual truth — but the `components`/`utilities` layers still have to be
+ * requested explicitly, or no utility class (bg-surface, text-h1, ...)
+ * generates any CSS at all. This is that one required opt-in.
  */
+
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* Primitives — warm neutrals, gentle sage, calm sky, reserved alert (37 §4). */

@@ -26,8 +26,12 @@ export interface UpdateOptions {
 
 /**
  * Storage-neutral CRUD + query over domain entities. Consistency/transaction
- * guarantees are expressed at the service level; the v1 adapter uses LockService
- * + append-only patterns to approximate them on Sheets (docs/04-Architecture/53 §7).
+ * guarantees are expressed at the service level; the v1 adapter approximates
+ * them on Sheets with append-only tables, adapter-enforced PK/FK/immutability
+ * checks, and optimistic `expectedVersion` concurrency — there are no
+ * multi-write transactions (docs/04-Architecture/53 §7). The `LockService`-based
+ * serialisation that §7 also describes is not yet wired in; single-writer
+ * safety therefore relies on the append-only pattern alone.
  */
 export interface StorageAdapter {
   /** Insert a new record; the adapter enforces PK uniqueness and FK existence. */

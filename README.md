@@ -2,7 +2,10 @@
 
 A premium, privacy-first **Mother & Child Health platform** that preserves **one continuous health record** across the entire family journey — from conception, through pregnancy, delivery, and newborn care, into infancy, toddlerhood, and beyond.
 
-> **Design-first.** This repository holds the complete **architecture and product documentation set** for Wise Bloom Care. Per the project's working method, the platform is fully designed before production features are implemented. **Sprint 00 (foundation) is now implemented**: the monorepo, tooling, CI, the two independence boundaries (API contract + Storage Adapter), and a deployable empty shell. No product features yet — see `docs/20-Implementation/205-SPRINT_00.md` and `SPRINT_00_COMPLETION_REPORT.md`.
+> **Design-first.** This repository holds the complete **architecture and product documentation set** for Wise Bloom Care. Per the project's working method, the platform is fully designed before production features are implemented.
+>
+> - **Sprint 00 (foundation)** — the monorepo, tooling, CI, the two independence boundaries (API contract + Storage Adapter), and a deployable empty shell. See `docs/20-Implementation/205-SPRINT_00.md` and `SPRINT_00_COMPLETION_REPORT.md`.
+> - **Sprint 01 (identity, family graph, pregnancy episode, timeline foundation)** — authentication and bearer sessions, the family/maternal record graph, PregnancyEpisode with derived gestational age, the append-only timeline read side, content typing, family-scope RBAC, audit wiring, and the registration/login/pregnancy-setup/timeline frontend. See `docs/20-Implementation/206-SPRINT_01.md`, `SPRINT_01_COMPLETION_REPORT.md`, `SPRINT_01_PATCH_REPORT.md`, `SPRINT_01_FINAL_REVIEW.md`, and `SPRINT_01_RELEASE_REVIEW.md`.
 
 - **Domain:** care.wisehomeopathy.com
 - **Founding thesis:** one journey, one linked record — the mother's pregnancy timeline and the child's growth timeline are two views of a single family record. At delivery, the baby profile is created automatically and permanently linked to the mother. No reset, no migration, no duplicates.
@@ -41,12 +44,25 @@ Astro · React · TypeScript · Tailwind CSS · Chart.js (frontend) · Google Ap
 ```
 Wise-Bloom-Care/
 ├─ README.md
+├─ ARCHITECTURE_REVIEW_REPORT.md       # architecture audit (frozen baseline)
+├─ IMPLEMENTATION_READINESS_REPORT.md  # implementation-planning readiness
+├─ FINAL_REPOSITORY_REVIEW.md          # design-phase repository review
 ├─ SPRINT_00_COMPLETION_REPORT.md      # Sprint 00 acceptance & Go/No-Go
+├─ SPRINT_01_COMPLETION_REPORT.md      # Sprint 01 acceptance & Go/No-Go
+├─ SPRINT_01_PATCH_REPORT.md           # Sprint 01 GAS auth-transport patch
+├─ SPRINT_01_RELEASE_NOTES.md          # Sprint 01 release notes
+├─ SPRINT_01_FINAL_CHECKLIST.md        # Sprint 01 merge/tag checklist
+├─ SPRINT_01_FINAL_REVIEW.md           # Sprint 01 final review & Go/No-Go
+├─ SPRINT_01_RELEASE_REVIEW.md         # Sprint 01 evidence-based release verification
+├─ SPRINT_01_FINAL_RELEASE_PACKAGE.md  # Sprint 01 release-manager package & decision
+├─ ISSUES_TO_CREATE.md                 # deferred work queued as GitHub issues
+├─ ISSUE_REVIEW.md                     # pre-merge review of issues #5–#15
+├─ MISSING_TAGS.md                     # required release tags & their targets
 ├─ pnpm-workspace.yaml · package.json · tsconfig.base.json · .nvmrc
 ├─ eslint.config.ts · prettier.config.mjs · commitlint.config.js
 ├─ apps/
-│  ├─ web/                             # Astro + React + TS + Tailwind shell
-│  └─ backend/                         # Google Apps Script (clasp) skeleton
+│  ├─ web/                             # Astro + React + TS + Tailwind app
+│  └─ backend/                         # Google Apps Script (clasp) backend
 ├─ packages/
 │  ├─ api-contract/                    # boundary #1 — logical API contract (docs 56)
 │  ├─ domain-types/                    # shared TS types (docs 70,72)
@@ -69,7 +85,7 @@ Wise-Bloom-Care/
 
 The monorepo layout is specified in `docs/20-Implementation/201-MONOREPO_STRUCTURE.md` (expanding `docs/04-Architecture/59-FOLDER_STRUCTURE.md`).
 
-## Getting started (Sprint 00 build baseline)
+## Getting started
 
 **Prerequisites:** Node `22.22.2` (see `.nvmrc`) and pnpm ≥ 10 (`corepack enable`).
 
@@ -81,16 +97,17 @@ pnpm install
 
 **Everyday commands** (run from the repo root):
 
-| Command                             | What it does                                                                                                         |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `pnpm -r lint` / `pnpm lint`        | ESLint incl. the two boundary rules (no `SpreadsheetApp` outside the adapter; no network outside `apps/web/src/api`) |
-| `pnpm -r typecheck`                 | Strict TypeScript across every package                                                                               |
-| `pnpm -r test`                      | Vitest: adapter round-trip, PHI-safe logging, boundary-rule meta-tests, web smoke test                               |
-| `pnpm -r build`                     | Build all packages and the Astro web app                                                                             |
-| `pnpm --filter @wise-bloom/web dev` | Run the frontend shell locally                                                                                       |
-| `pnpm seed:synthetic`               | Emit a synthetic (never real PHI) family dataset                                                                     |
+| Command                             | What it does                                                                                                                           |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm -r lint` / `pnpm lint`        | ESLint incl. the two boundary rules (no `SpreadsheetApp` outside the adapter; no network outside `apps/web/src/api`)                   |
+| `pnpm format:check` / `pnpm format` | Prettier compliance check / auto-format (`docs/` and `knowledge-base/` are excluded — see `.prettierignore`)                           |
+| `pnpm -r typecheck`                 | Strict TypeScript across every package                                                                                                 |
+| `pnpm -r test`                      | Vitest: 161 tests — crypto vectors, auth/session/timeline services, integration, cross-app integrity, boundary meta-tests, web islands |
+| `pnpm -r build`                     | Build all packages and the Astro web app                                                                                               |
+| `pnpm --filter @wise-bloom/web dev` | Run the frontend locally                                                                                                               |
+| `pnpm seed:synthetic`               | Emit a synthetic (never real PHI) family dataset                                                                                       |
 
-**CI** (`.github/workflows/ci.yml`) runs lint → type-check → test → build plus secret scanning on every push/PR — this is Sprint 00 gate **G-0**.
+**CI** (`.github/workflows/ci.yml`) runs lint → format-check → type-check → test → build plus secret scanning on every push/PR — this is gate **G-0**.
 
 **Deploy (dev)** (`.github/workflows/deploy-dev.yml`) builds the frontend artifact and pushes the Apps Script backend to the isolated **dev** environment via `clasp`. It runs on manual dispatch and only when the `DEV_SCRIPT_ID` and `CLASPRC_JSON` environment secrets are configured — **no secrets live in the repo** (`docs/04-Architecture/60` BR-3). Copy `apps/backend/.clasp.json.example` → `.clasp.json` (git-ignored) for local dev.
 

@@ -1,0 +1,22 @@
+{
+  "name": "@wise-bloom/tests",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cross-app contract, integrity, and e2e test suites (docs/20-Implementation/201 §5) — invariants that span apps rather than living inside a single package.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@wise-bloom/api-contract": "workspace:*",
+    "@wise-bloom/domain-types": "workspace:*",
+    "@types/google-apps-script": "^1.0.99",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

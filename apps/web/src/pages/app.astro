@@ -1,0 +1,41 @@
+---
+/**
+ * The authenticated app shell (docs/04-Architecture/51 §5,
+ * docs/20-Implementation/206 objective 7: "pregnancy setup; empty/continuous
+ * timeline view"). Static Astro shell hydrating three independent islands;
+ * each checks its own session state and redirects to `/login` if none exists
+ * (docs/04-Architecture/57).
+ */
+import LogoutButton from '../features/auth/LogoutButton';
+import PregnancySetupIsland from '../features/pregnancy/PregnancySetupIsland';
+import TimelineView from '../features/timeline/TimelineView';
+import { apiBaseUrl } from '../lib/apiConfig';
+import '../styles/tokens.css';
+
+const base = apiBaseUrl();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Your continuous pregnancy and family health record." />
+    <title>Your record — Wise Bloom Care</title>
+  </head>
+  <body>
+    <main
+      class="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 bg-surface px-6 py-12 font-sans text-text-primary"
+    >
+      <header class="flex items-center justify-between">
+        <p class="text-small font-medium uppercase tracking-wide text-text-secondary">
+          Wise Bloom Care
+        </p>
+        <LogoutButton client:load apiBaseUrl={base} />
+      </header>
+
+      <PregnancySetupIsland client:load apiBaseUrl={base} />
+      <TimelineView client:load apiBaseUrl={base} />
+    </main>
+  </body>
+</html>

@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "deploy:dev": "clasp push"
+    "deploy:dev": "npx --yes @google/clasp@2.4.2 push"
   },
   "dependencies": {
     "@wise-bloom/api-contract": "workspace:*",

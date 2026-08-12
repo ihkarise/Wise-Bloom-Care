@@ -6,105 +6,38 @@
  * the facts the adapter needs to serialise records to rows and enforce
  * integrity that Sheets itself cannot (54 §5). This table is the *only* place
  * that knows the physical layout; everything above it speaks domain entities.
+ *
+ * Sprint 01's entities (users, sessions, families, maternal, pregnancyEpisodes,
+ * events, audit — docs/20-Implementation/206 §4) each have their own file, one
+ * responsibility per module. Entities not yet owned by a shipped module stay
+ * inline below until their sprint gives them a dedicated file.
  */
+
+import { AUDIT_RECORD_TABLE } from './audit';
+import { EVENT_TABLE } from './events';
+import { FAMILY_TABLE } from './families';
+import { MATERNAL_RECORD_TABLE } from './maternal';
+import { PREGNANCY_EPISODE_TABLE } from './pregnancyEpisodes';
+import { SESSION_TABLE } from './sessions';
+import { f, type TableMapping } from './types';
+import { USER_TABLE } from './users';
 
 import type { EntityName } from '@wise-bloom/domain-types';
 
-export type FieldType = 'string' | 'number' | 'boolean' | 'json' | 'date' | 'datetime';
-
-export interface FieldSpec {
-  /** Column name (row-1 header) and the record property it maps to. */
-  name: string;
-  type: FieldType;
-  /** Optional per docs/05-Data/72 (partial/retrospective data is allowed). */
-  optional?: boolean;
-}
-
-export interface ForeignKey {
-  field: string;
-  references: EntityName;
-}
-
-export interface TableMapping {
-  entity: EntityName;
-  tab: string;
-  pk: string;
-  /** Append-only tables are never updated in place (docs/04-Architecture/54 BR-3). */
-  appendOnly: boolean;
-  /** Fields written once and never changed (e.g., child.mother_id — 54 BR-2). */
-  immutableFields: string[];
-  fields: FieldSpec[];
-  foreignKeys: ForeignKey[];
-}
-
-function f(name: string, type: FieldType, optional = false): FieldSpec {
-  return optional ? { name, type, optional } : { name, type };
-}
+export type { FieldSpec, FieldType, ForeignKey, TableMapping } from './types';
 
 /**
  * The core tables from docs/04-Architecture/54 §4. Column sets are the
  * authoritative field specs from docs/05-Data/70,72.
  */
 export const TABLES: Record<EntityName, TableMapping> = {
-  Family: {
-    entity: 'Family',
-    tab: 'families',
-    pk: 'family_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [f('family_id', 'string'), f('owner_user_id', 'string'), f('created_at', 'datetime')],
-    foreignKeys: [],
-  },
-  User: {
-    entity: 'User',
-    tab: 'users',
-    pk: 'user_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [
-      f('user_id', 'string'),
-      f('email_hash', 'string'),
-      f('credential_hash', 'string'),
-      f('role', 'string'),
-      f('status', 'string'),
-    ],
-    foreignKeys: [],
-  },
-  Session: {
-    entity: 'Session',
-    tab: 'sessions',
-    pk: 'session_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [f('session_id', 'string'), f('user_id', 'string'), f('expires_at', 'datetime')],
-    foreignKeys: [{ field: 'user_id', references: 'User' }],
-  },
-  MaternalRecord: {
-    entity: 'MaternalRecord',
-    tab: 'maternal_records',
-    pk: 'maternal_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [f('maternal_id', 'string'), f('family_id', 'string'), f('profile', 'json')],
-    foreignKeys: [{ field: 'family_id', references: 'Family' }],
-  },
-  PregnancyEpisode: {
-    entity: 'PregnancyEpisode',
-    tab: 'pregnancy_episodes',
-    pk: 'episode_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [
-      f('episode_id', 'string'),
-      f('maternal_id', 'string'),
-      f('lmp', 'date', true),
-      f('edd', 'date', true),
-      f('pre_pregnancy_bmi_cat', 'string'),
-      f('parity', 'string'),
-      f('status', 'string'),
-    ],
-    foreignKeys: [{ field: 'maternal_id', references: 'MaternalRecord' }],
-  },
+  Family: FAMILY_TABLE,
+  User: USER_TABLE,
+  Session: SESSION_TABLE,
+  MaternalRecord: MATERNAL_RECORD_TABLE,
+  PregnancyEpisode: PREGNANCY_EPISODE_TABLE,
+  Event: EVENT_TABLE,
+  AuditRecord: AUDIT_RECORD_TABLE,
   ChildRecord: {
     entity: 'ChildRecord',
     tab: 'child_records',
@@ -125,25 +58,6 @@ export const TABLES: Record<EntityName, TableMapping> = {
       { field: 'mother_id', references: 'MaternalRecord' },
       { field: 'episode_id', references: 'PregnancyEpisode' },
     ],
-  },
-  Event: {
-    entity: 'Event',
-    tab: 'events',
-    pk: 'event_id',
-    appendOnly: true,
-    immutableFields: [],
-    fields: [
-      f('event_id', 'string'),
-      f('family_id', 'string'),
-      f('subject_id', 'string'),
-      f('type', 'string'),
-      f('life_stage', 'string'),
-      f('occurred_at', 'datetime'),
-      f('payload_ref', 'string', true),
-      f('version', 'number'),
-      f('created_by', 'string'),
-    ],
-    foreignKeys: [{ field: 'family_id', references: 'Family' }],
   },
   Vital: {
     entity: 'Vital',
@@ -288,26 +202,6 @@ export const TABLES: Record<EntityName, TableMapping> = {
       { field: 'family_id', references: 'Family' },
       { field: 'user_id', references: 'User' },
     ],
-  },
-  AuditRecord: {
-    entity: 'AuditRecord',
-    tab: 'audit_log',
-    pk: 'audit_id',
-    appendOnly: true,
-    immutableFields: [],
-    fields: [
-      f('audit_id', 'string'),
-      f('actor_user_id', 'string'),
-      f('actor_role', 'string'),
-      f('action', 'string'),
-      f('entity', 'string'),
-      f('entity_id', 'string'),
-      f('family_id', 'string', true),
-      f('at', 'datetime'),
-      f('correlation_id', 'string', true),
-      f('meta', 'json', true),
-    ],
-    foreignKeys: [],
   },
   ContentItem: {
     entity: 'ContentItem',

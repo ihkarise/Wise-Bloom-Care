@@ -1,7 +1,7 @@
 name: CI
 
 # Green CI on an empty-but-wired build is the Sprint 00 deliverable and gate G-0
-# (docs/20-Implementation/205 §7/§8, 202 §7). Order: lint → type-check → test → build.
+# (docs/20-Implementation/205 §7/§8, 202 §7). Order: lint → format → type-check → test → build.
 on:
   push:
     branches: ['**']
@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   verify:
-    name: lint · type-check · test · build
+    name: lint · format · type-check · test · build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +37,12 @@ jobs:
         run: |
           pnpm lint
           pnpm -r lint
+
+      # Prettier compliance is machine-verified, not left to the pre-commit hook:
+      # lint-staged only formats files that pass through a local commit, so a
+      # commit made outside the hook can still land unformatted (docs/11-Development/140 §8).
+      - name: Format check
+        run: pnpm format:check
 
       - name: Type-check
         run: pnpm -r typecheck

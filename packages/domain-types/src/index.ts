@@ -95,7 +95,7 @@ export type MilestoneStatus = 'achieved' | 'not_yet' | 'not_sure';
 /** Immunization dose status (docs/05-Data/72 §7). */
 export type VaccinationStatus = 'given' | 'skipped' | 'deferred' | 'scheduled';
 
-/** Appointment status (docs/05-Data/54 §appointments). */
+/** Appointment status (docs/04-Architecture/54 §appointments). */
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'missed';
 
 /** Medical content type — safety-critical (docs/02-Research/28, docs/05-Data/72 §9). */
@@ -128,12 +128,22 @@ export interface User {
   credential_hash: string;
   role: Role;
   status: UserStatus;
+  /** When the medical disclaimer was acknowledged at registration (docs/02-Research/28 BR-5, docs/04-Architecture/57 §4). Absent = not yet acknowledged. */
+  disclaimer_ack_at?: ISODateTime;
 }
 
-/** Session token record (docs/04-Architecture/54 §sessions). */
+/**
+ * Session token record (docs/04-Architecture/55 §3 "id, user, issued/expires").
+ * `session_id` is the opaque bearer token itself (docs/04-Architecture/57 §6
+ * "opaque ... session token"; docs/05-Data/72 §3 "IDs are opaque UUID
+ * strings") — there is no separate token field to keep in sync.
+ */
 export interface Session {
   session_id: UUID;
   user_id: UUID;
+  /** Session start; anchors the absolute lifetime ceiling (docs/09-Security/122 §3–4). */
+  issued_at: ISODateTime;
+  /** Rolling access-TTL expiry; extended by refresh, capped by the absolute lifetime. */
   expires_at: ISODateTime;
 }
 
@@ -186,7 +196,10 @@ export interface ChildRecord {
 /**
  * Append-only timeline event (docs/05-Data/70 §Event). `subject_id` is
  * polymorphic — a maternal or child record — unifying the one continuous
- * timeline (docs/05-Data/71 §3). Corrections are new versions, never edits.
+ * timeline (docs/05-Data/71 §3). Corrections are new versions, never edits:
+ * since `event_id` is a unique PK, a correction is a brand-new row
+ * (docs/05-Data/77 §5) — `corrects_event_id` links it back to the original so
+ * the "current" version of a lineage can be resolved (77 §4, `version`).
  */
 export interface Event {
   event_id: UUID;
@@ -198,6 +211,8 @@ export interface Event {
   payload_ref?: UUID;
   version: number;
   created_by: UUID;
+  /** The original event's id — set only on correction rows; absent on the original (docs/05-Data/77 §5). */
+  corrects_event_id?: UUID;
 }
 
 /** Vital measurement (docs/05-Data/70 §Vital). Canonical units per docs/05-Data/72 §5. */
@@ -211,7 +226,7 @@ export interface Vital {
   measured_at: ISODateTime;
 }
 
-/** WHO growth measurement (docs/05-Data/70, 54 §growth_measurements). */
+/** WHO growth measurement (docs/05-Data/70, docs/04-Architecture/54 §growth_measurements). */
 export interface GrowthMeasurement {
   gm_id: UUID;
   child_id: UUID;
@@ -231,7 +246,7 @@ export interface Milestone {
   observed_at: ISODateTime;
 }
 
-/** Immunization dose (docs/05-Data/70, 54 §vaccinations). */
+/** Immunization dose (docs/05-Data/70, docs/04-Architecture/54 §vaccinations). */
 export interface Vaccination {
   vax_id: UUID;
   child_id: UUID;

@@ -4,7 +4,10 @@
  * Google Sheets has no relational constraints, so the adapter enforces them:
  * PK uniqueness, FK existence, immutability of write-once links (child.mother_id),
  * and append-only tables (events, audit_log). These are pure checks over the
- * current rows; the adapter calls them inside a lock on write (docs/04-Architecture/53 §7).
+ * current rows, evaluated by the adapter immediately before each write
+ * (docs/04-Architecture/53 §7). They are not yet serialised behind
+ * `LockService`, so they are read-then-write rather than atomic — see the
+ * StorageAdapter interface docs.
  */
 
 import type { TableMapping } from '../tables/index';
