@@ -12,19 +12,24 @@
 
 import type {
   Appointment,
+  BloodPressureTrend,
   BmiCategory,
   ContentItem,
+  DashboardSummary,
   Event,
   Family,
   GrowthMeasurement,
   ISODate,
+  ISODateTime,
   MaternalProfile,
   MaternalRecord,
   Milestone,
   Parity,
   PregnancyEpisode,
+  Report,
   Role,
   Session,
+  TrendResult,
   UUID,
   UserStatus,
   Vaccination,
@@ -105,6 +110,7 @@ export const RESOURCES = [
   'content',
   'ai',
   'export',
+  'dashboard',
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];
@@ -155,6 +161,25 @@ export const ENDPOINTS = [
   { method: 'GET', path: '/v1/content', purpose: 'a typed, sourced content item', write: false },
   { method: 'POST', path: '/v1/vitals', purpose: 'log a vital', write: true },
   { method: 'GET', path: '/v1/vitals', purpose: 'vital series', write: false },
+  {
+    method: 'POST',
+    path: '/v1/reports',
+    purpose: 'upload a report (metadata + private media)',
+    write: true,
+  },
+  { method: 'GET', path: '/v1/reports', purpose: 'list report metadata', write: false },
+  {
+    method: 'GET',
+    path: '/v1/reports/media',
+    purpose: 'mint a short-lived, backend-mediated media reference (report_id query param)',
+    write: false,
+  },
+  {
+    method: 'GET',
+    path: '/v1/dashboard',
+    purpose: 'at-a-glance status + metric tiles + recent timeline (aggregation only)',
+    write: false,
+  },
   { method: 'GET', path: '/v1/appointments', purpose: 'list appointments', write: false },
   {
     method: 'POST',
@@ -179,7 +204,12 @@ export type EndpointPath = (typeof ENDPOINTS)[number]['path'];
 /** `GET /v1/timeline?cursor=` → one continuous stream (docs/04-Architecture/56 BR-3). */
 export type TimelineResponse = Paginated<Event>;
 
-/** `POST /v1/vitals` request. Partial/retrospective entry is allowed (P9). */
+/**
+ * `POST /v1/vitals` request for a single-value vital (weight, blood_sugar, or
+ * one BP component). Partial/retrospective entry is allowed (P9). Blood
+ * pressure is logged as a *pair* via `CreateBloodPressureRequest` instead —
+ * the request body is a discriminated union (see `LogVitalRequest`).
+ */
 export interface CreateVitalRequest {
   subject_id: Vital['subject_id'];
   type: Vital['type'];
@@ -189,14 +219,102 @@ export interface CreateVitalRequest {
   measured_at: Vital['measured_at'];
 }
 
-/** `POST /v1/vitals` → the logged event plus the created vital (docs/04-Architecture/56 §5). */
+/**
+ * `POST /v1/vitals` request for a blood-pressure reading. One submission →
+ * two Vital rows (systolic + diastolic) sharing `measured_at`, i.e. one
+ * logical BP event (docs/05-Data/72 §5, frozen domain model). The two-row
+ * split is an implementation detail of storage; the client submits one reading.
+ */
+export interface CreateBloodPressureRequest {
+  subject_id: Vital['subject_id'];
+  /** Discriminates this from a single-value vital body. */
+  type: 'bp';
+  systolic: number;
+  diastolic: number;
+  /** Canonical unit is mmHg (docs/05-Data/72 §5); defaults server-side when omitted. */
+  unit?: string;
+  measured_at: Vital['measured_at'];
+}
+
+/** `POST /v1/vitals` body — either a single-value vital or a paired BP reading. */
+export type LogVitalRequest = CreateVitalRequest | CreateBloodPressureRequest;
+
+/**
+ * `POST /v1/vitals` → the logged event plus the created vital and its
+ * arithmetic trend (docs/04-Architecture/56 §5 "returns event + trend").
+ * `trend` is surfacing-only — never diagnostic (docs/06-Modules/83 BR-1).
+ */
 export interface CreateVitalResponse {
+  reading: 'single';
   event: Event;
   vital: Vital;
+  trend: TrendResult;
 }
+
+/**
+ * `POST /v1/vitals` (BP) → one event, the two created Vital rows, and the
+ * paired blood-pressure trend. `vitals` is `[systolic, diastolic]`.
+ */
+export interface CreateBloodPressureResponse {
+  reading: 'bp';
+  event: Event;
+  vitals: Vital[];
+  trend: BloodPressureTrend;
+}
+
+/** `POST /v1/vitals` response — discriminated on `reading`. */
+export type LogVitalResponse = CreateVitalResponse | CreateBloodPressureResponse;
 
 /** `GET /v1/vitals?type=` → a vital series for charting. */
 export type VitalSeriesResponse = Paginated<Vital>;
+
+// ---------------------------------------------------------------------------
+// Reports (docs/06-Modules/84, docs/04-Architecture/56 §7, 58 media privacy)
+// ---------------------------------------------------------------------------
+
+/**
+ * `POST /v1/reports` request. The client hands the backend an opaque upload
+ * handle (never a public URL); the backend mints and stores a private
+ * `media_ref` from it (docs/06-Modules/84 BR-1). Retrospective `uploaded_at`
+ * is allowed (P9).
+ */
+export interface CreateReportRequest {
+  subject_id: Report['subject_id'];
+  kind: Report['kind'];
+  /** Opaque, backend-mediated upload handle — resolved to a private media_ref; never a public link. */
+  media_upload_ref: string;
+  uploaded_at?: Report['uploaded_at'];
+}
+
+/** `POST /v1/reports` → the stored metadata plus the timeline event it created (84 BR-5). */
+export interface CreateReportResponse {
+  event: Event;
+  report: Report;
+}
+
+/** `GET /v1/reports?subject_id=` → report metadata only. Media is fetched separately via a short-lived ref. */
+export type ReportListResponse = Paginated<Report>;
+
+/**
+ * `GET /v1/reports/media?report_id=` → a short-lived, backend-mediated
+ * reference to the private media. It expires (`expires_at`) and is never a
+ * durable public link (docs/04-Architecture/58, docs/06-Modules/84 BR-1).
+ */
+export interface ReportMediaResponse {
+  report_id: Report['report_id'];
+  /** Opaque, expiring reference the client presents back to the backend to view the media. */
+  media_ref: string;
+  expires_at: ISODateTime;
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard (docs/06-Modules/81 — aggregation only, reads across services)
+// ---------------------------------------------------------------------------
+
+/** `GET /v1/dashboard` → the aggregated read model (docs/06-Modules/81). */
+export interface DashboardResponse {
+  dashboard: DashboardSummary;
+}
 
 /** `GET /v1/appointments` → list. */
 export type AppointmentListResponse = Paginated<Appointment>;

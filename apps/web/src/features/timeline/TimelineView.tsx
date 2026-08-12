@@ -80,7 +80,12 @@ export default function TimelineView({ apiBaseUrl }: TimelineViewProps): ReactEl
               key={item.event_id}
               className="rounded-md border border-border bg-surface-raised p-3 text-body text-text-primary"
             >
-              <p className="font-medium">{EVENT_TYPE_LABEL[item.type]}</p>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full border border-border px-2 py-0.5 text-caption uppercase tracking-wide text-text-secondary">
+                  {item.type}
+                </span>
+                <p className="font-medium">{EVENT_TYPE_LABEL[item.type]}</p>
+              </div>
               <p className="text-small text-text-secondary">{formatOccurredAt(item.occurred_at)}</p>
             </li>
           ))}

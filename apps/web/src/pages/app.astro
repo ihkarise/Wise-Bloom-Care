@@ -7,8 +7,11 @@
  * (docs/04-Architecture/57).
  */
 import LogoutButton from '../features/auth/LogoutButton';
+import DashboardIsland from '../features/dashboard/DashboardIsland';
 import PregnancySetupIsland from '../features/pregnancy/PregnancySetupIsland';
+import ReportUploadIsland from '../features/reports/ReportUploadIsland';
 import TimelineView from '../features/timeline/TimelineView';
+import VitalLogIsland from '../features/vitals/VitalLogIsland';
 import { apiBaseUrl } from '../lib/apiConfig';
 import '../styles/tokens.css';
 
@@ -34,7 +37,10 @@ const base = apiBaseUrl();
         <LogoutButton client:load apiBaseUrl={base} />
       </header>
 
+      <DashboardIsland client:load apiBaseUrl={base} />
       <PregnancySetupIsland client:load apiBaseUrl={base} />
+      <VitalLogIsland client:visible apiBaseUrl={base} />
+      <ReportUploadIsland client:visible apiBaseUrl={base} />
       <TimelineView client:load apiBaseUrl={base} />
     </main>
   </body>

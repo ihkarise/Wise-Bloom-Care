@@ -7,7 +7,7 @@
  */
 
 import { PregnancyValidationError, type PregnancyService } from '../services/PregnancyService';
-import { resolveScopedFamily } from './rbac';
+import { requireFamilyMaternal, resolveScopedFamily } from './rbac';
 import { asRecord, queryParam, todayIsoDate } from './requestHelpers';
 import { ApiException, requireActor, type RouteHandler } from './router';
 
@@ -20,21 +20,13 @@ import type {
   PregnancyEpisodeListResponse,
   PregnancyEpisodeResponse,
 } from '@wise-bloom/api-contract';
-import type { BmiCategory, MaternalRecord, Parity } from '@wise-bloom/domain-types';
+import type { BmiCategory, Parity } from '@wise-bloom/domain-types';
 
 export interface MaternalControllerDeps {
   family: FamilyService;
   maternal: MaternalService;
   pregnancy: PregnancyService;
   audit: AuditService;
-}
-
-function requireMaternalRecord(deps: MaternalControllerDeps, familyId: string): MaternalRecord {
-  const maternal = deps.maternal.findByFamily(familyId);
-  if (!maternal) {
-    throw new ApiException('not_found', 404, 'No maternal record found for this family');
-  }
-  return maternal;
 }
 
 function parseCreateEpisodeBody(body: Record<string, unknown>): CreatePregnancyEpisodeRequest {
@@ -55,7 +47,7 @@ export function createMaternalController(
     'GET /v1/maternal': (request, actor): { status: number; body: MaternalResponse } => {
       const me = requireActor(actor);
       const family = resolveScopedFamily(deps.family, me, queryParam(request, 'family_id'));
-      const maternal = requireMaternalRecord(deps, family.family_id);
+      const maternal = requireFamilyMaternal(deps.maternal, family.family_id);
 
       deps.audit.record({
         actorUserId: me.userId,
@@ -76,7 +68,7 @@ export function createMaternalController(
     ): { status: number; body: PregnancyEpisodeResponse } => {
       const me = requireActor(actor);
       const family = resolveScopedFamily(deps.family, me, queryParam(request, 'family_id'));
-      const maternal = requireMaternalRecord(deps, family.family_id);
+      const maternal = requireFamilyMaternal(deps.maternal, family.family_id);
       const input = parseCreateEpisodeBody(asRecord(request.body));
 
       let episode;
@@ -114,7 +106,7 @@ export function createMaternalController(
     ): { status: number; body: PregnancyEpisodeListResponse } => {
       const me = requireActor(actor);
       const family = resolveScopedFamily(deps.family, me, queryParam(request, 'family_id'));
-      const maternal = requireMaternalRecord(deps, family.family_id);
+      const maternal = requireFamilyMaternal(deps.maternal, family.family_id);
       const today = todayIsoDate();
       const items = deps.pregnancy.listEpisodes(maternal.maternal_id).map((episode) => ({
         episode,

@@ -7,9 +7,12 @@
  */
 
 import { createAuthController } from './controllers/authController';
+import { createDashboardController } from './controllers/dashboardController';
 import { createFamilyController } from './controllers/familyController';
 import { createMaternalController } from './controllers/maternalController';
+import { createReportsController } from './controllers/reportsController';
 import { createTimelineController } from './controllers/timelineController';
+import { createVitalsController } from './controllers/vitalsController';
 import {
   createRouter,
   type ApiRequest,
@@ -17,15 +20,21 @@ import {
   type AuthenticatedActor,
   type RouteHandler,
 } from './controllers/router';
+import { bytesToHex, hmacSha256, utf8ToBytes } from './lib/crypto';
+import { MediaService } from './lib/media';
 import { createInMemoryRateLimiter } from './lib/rateLimiter';
 import { AuditService } from './services/AuditService';
 import { AuthService } from './services/AuthService';
 import { ContentService } from './services/ContentService';
+import { DashboardService } from './services/DashboardService';
 import { FamilyService } from './services/FamilyService';
 import { MaternalService } from './services/MaternalService';
 import { PregnancyService } from './services/PregnancyService';
+import { ReportsService } from './services/ReportsService';
 import { SessionService } from './services/SessionService';
 import { TimelineService } from './services/TimelineService';
+import { TrendService } from './services/TrendService';
+import { VitalsService } from './services/VitalsService';
 
 import type { Logger } from './lib/logging';
 import type { StorageAdapter } from './adapters/StorageAdapter';
@@ -54,6 +63,10 @@ export interface App {
     pregnancy: PregnancyService;
     timeline: TimelineService;
     content: ContentService;
+    trend: TrendService;
+    vitals: VitalsService;
+    reports: ReportsService;
+    dashboard: DashboardService;
   };
 }
 
@@ -68,6 +81,16 @@ export function buildApp(config: AppConfig): App {
   const pregnancy = new PregnancyService(storage);
   const timeline = new TimelineService(storage);
   const content = new ContentService(storage);
+  const trend = new TrendService();
+  const vitals = new VitalsService(storage, timeline, trend);
+
+  // Media signing key is derived from the email pepper (Script Property, docs/09-Security/124)
+  // so no new required deployment secret is introduced; refs stay short-lived + backend-mediated (58).
+  const mediaSigningSecret = bytesToHex(
+    hmacSha256(utf8ToBytes(emailPepper), utf8ToBytes('media-signing')),
+  );
+  const reports = new ReportsService(storage, timeline, new MediaService(mediaSigningSecret));
+  const dashboard = new DashboardService({ storage, timeline, trend, maternal, pregnancy });
   const auth = new AuthService({
     storage,
     sessions,
@@ -100,6 +123,9 @@ export function buildApp(config: AppConfig): App {
     ...createFamilyController({ family }),
     ...createMaternalController({ family, maternal, pregnancy, audit }),
     ...createTimelineController({ family, timeline, audit }),
+    ...createVitalsController({ family, maternal, vitals, audit }),
+    ...createReportsController({ family, maternal, reports, audit }),
+    ...createDashboardController({ family, dashboard, audit }),
   };
 
   const handle = createRouter({
@@ -111,6 +137,19 @@ export function buildApp(config: AppConfig): App {
 
   return {
     handle,
-    services: { sessions, audit, auth, family, maternal, pregnancy, timeline, content },
+    services: {
+      sessions,
+      audit,
+      auth,
+      family,
+      maternal,
+      pregnancy,
+      timeline,
+      content,
+      trend,
+      vitals,
+      reports,
+      dashboard,
+    },
   };
 }
