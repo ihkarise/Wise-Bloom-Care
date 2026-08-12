@@ -132,6 +132,11 @@ environment on the final branch state — results are observed, not assumed.
 - [x] `SPRINT_01_FINAL_REVIEW.md` — repository health, quality, compliance, risk, overall grade.
 - [x] `ISSUES_TO_CREATE.md` — 11 deferred items, each with priority, milestone, labels,
       description, and acceptance criteria. All 11 filed as GitHub issues **#5–#15**.
+- [x] `SPRINT_01_RELEASE_REVIEW.md` — evidence-based release verification against git, the GitHub
+      API, and CI job logs.
+- [x] `SPRINT_01_FINAL_RELEASE_PACKAGE.md` — release-manager package and decision.
+- [x] `ISSUE_REVIEW.md` — pre-merge review of issues #5–#15.
+- [x] `MISSING_TAGS.md` — the four required release tags and their target commits.
 - [x] `SPRINT_01_FINAL_CHECKLIST.md` — this document.
 
 ## Merge readiness
@@ -148,7 +153,8 @@ Not part of this PR, but required to close Sprint 01 out:
 
 1. Create the `Sprint 02`, `Sprint 03`, `Hardening`, and `v2 — Migration` milestones and assign
    issues #5–#15 to them (the issues are filed; the milestones do not exist yet).
-2. Tag the merge commit `v0.1.0-sprint-01`.
+2. Tag the merge commit `v1.3.0-sprint-01` (see `MISSING_TAGS.md` for the full four-tag sequence —
+   the three historical tags can be created immediately; this one requires the merge first).
 3. Configure `SPREADSHEET_ID` and `EMAIL_PEPPER` Script Properties before any dev deployment —
    the backend refuses to start without them (`SPRINT_01_RELEASE_NOTES.md` → Upgrade Notes).
 4. Consider making the CI `verify` job a required status check on `main`, so the format gate cannot

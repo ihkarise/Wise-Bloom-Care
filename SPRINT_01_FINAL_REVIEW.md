@@ -304,5 +304,5 @@ It is **GO WITH NOTES** rather than a plain GO for three reasons, none of which 
 None of these is a reason to hold the merge. All are reasons to schedule issues 1, 3, and 6 into the
 next sprint before feature work resumes.
 
-**Recommendation: merge, tag `v0.1.0-sprint-01`, file the 11 issues, and deploy to dev as a
+**Recommendation: merge, tag `v1.3.0-sprint-01`, file the 11 issues, and deploy to dev as a
 verification exercise before Sprint 02 begins.**

@@ -43,4 +43,8 @@ The repository's Tags page currently has zero tags and zero releases. This docum
 
 ### Notes
 
-All four tags are annotated (`-a`) with a message, consistent with marking meaningful project milestones rather than lightweight/throwaway refs. `SPRINT_01_FINAL_CHECKLIST.md` and `SPRINT_01_RELEASE_NOTES.md` previously proposed an inconsistent ad hoc tag, `v0.1.0-sprint-01`; both have been corrected in this same review to reference `v1.3.0-sprint-01` so every document in the repository now points at the same four-tag release sequence. No `git tag` command was executed as part of this review, per instruction — tag creation remains a manual step for the repository owner to perform after this PR merges.
+All four tags are annotated (`-a`) with a message, consistent with marking meaningful project milestones rather than lightweight/throwaway refs.
+
+Four documents previously proposed an inconsistent ad hoc Sprint 01 tag name instead of `v1.3.0-sprint-01`: `SPRINT_01_RELEASE_NOTES.md` and the header table of `SPRINT_01_FINAL_CHECKLIST.md` were corrected first, and a follow-up correction pass then caught the two remaining live instructions — the post-merge action list in `SPRINT_01_FINAL_CHECKLIST.md` and the closing recommendation in `SPRINT_01_FINAL_REVIEW.md`. A repository-wide search now returns zero occurrences of the old name, so every document points at the same four-tag release sequence.
+
+No `git tag` command was executed as part of this review or the correction pass, per instruction — tag creation remains a manual step for the repository owner. The three historical tags (`v1.0.0-architecture`, `v1.1.0-implementation-plan`, `v1.2.0-sprint-00`) target commits that already exist on `main` and can be created immediately; `v1.3.0-sprint-01` must wait until Sprint 01 is merged, because its target commit does not exist yet.

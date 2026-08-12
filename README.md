@@ -5,7 +5,7 @@ A premium, privacy-first **Mother & Child Health platform** that preserves **one
 > **Design-first.** This repository holds the complete **architecture and product documentation set** for Wise Bloom Care. Per the project's working method, the platform is fully designed before production features are implemented.
 >
 > - **Sprint 00 (foundation)** — the monorepo, tooling, CI, the two independence boundaries (API contract + Storage Adapter), and a deployable empty shell. See `docs/20-Implementation/205-SPRINT_00.md` and `SPRINT_00_COMPLETION_REPORT.md`.
-> - **Sprint 01 (identity, family graph, pregnancy episode, timeline foundation)** — authentication and bearer sessions, the family/maternal record graph, PregnancyEpisode with derived gestational age, the append-only timeline read side, content typing, family-scope RBAC, audit wiring, and the registration/login/pregnancy-setup/timeline frontend. See `docs/20-Implementation/206-SPRINT_01.md`, `SPRINT_01_COMPLETION_REPORT.md`, `SPRINT_01_PATCH_REPORT.md`, and `SPRINT_01_FINAL_REVIEW.md`.
+> - **Sprint 01 (identity, family graph, pregnancy episode, timeline foundation)** — authentication and bearer sessions, the family/maternal record graph, PregnancyEpisode with derived gestational age, the append-only timeline read side, content typing, family-scope RBAC, audit wiring, and the registration/login/pregnancy-setup/timeline frontend. See `docs/20-Implementation/206-SPRINT_01.md`, `SPRINT_01_COMPLETION_REPORT.md`, `SPRINT_01_PATCH_REPORT.md`, `SPRINT_01_FINAL_REVIEW.md`, and `SPRINT_01_RELEASE_REVIEW.md`.
 
 - **Domain:** care.wisehomeopathy.com
 - **Founding thesis:** one journey, one linked record — the mother's pregnancy timeline and the child's growth timeline are two views of a single family record. At delivery, the baby profile is created automatically and permanently linked to the mother. No reset, no migration, no duplicates.
@@ -53,7 +53,11 @@ Wise-Bloom-Care/
 ├─ SPRINT_01_RELEASE_NOTES.md          # Sprint 01 release notes
 ├─ SPRINT_01_FINAL_CHECKLIST.md        # Sprint 01 merge/tag checklist
 ├─ SPRINT_01_FINAL_REVIEW.md           # Sprint 01 final review & Go/No-Go
+├─ SPRINT_01_RELEASE_REVIEW.md         # Sprint 01 evidence-based release verification
+├─ SPRINT_01_FINAL_RELEASE_PACKAGE.md  # Sprint 01 release-manager package & decision
 ├─ ISSUES_TO_CREATE.md                 # deferred work queued as GitHub issues
+├─ ISSUE_REVIEW.md                     # pre-merge review of issues #5–#15
+├─ MISSING_TAGS.md                     # required release tags & their targets
 ├─ pnpm-workspace.yaml · package.json · tsconfig.base.json · .nvmrc
 ├─ eslint.config.ts · prettier.config.mjs · commitlint.config.js
 ├─ apps/
