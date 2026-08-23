@@ -8,7 +8,17 @@
 | Milestones            | MS-1.2 (Dashboard), MS-1.3 (Vitals), MS-1.5 (Reports)      |
 | Architecture baseline | `v1.0.0-Architecture` (FROZEN — unchanged)                 |
 | Spec                  | `docs/20-Implementation/207-SPRINT_02.md`                  |
-| Status                | Complete; validated; **no PR opened**                      |
+| Status                | Complete; validated; superseded by release review          |
+
+---
+
+> **Release-review amendment (2026-08-23).** During the Sprint 02 release review the vitals
+> charts were migrated from the interim inline-SVG sparkline to **Chart.js**, the charting
+> library mandated by the frozen architecture (docs/ADR/ADR-003-Astro, docs/04-Architecture/51 §9,
+> docs/06-Modules/83). Chart.js is dynamically imported at the island so it stays out of the
+> initial bundle. Test totals updated to **207** (161 backend + 46 web). See
+> `SPRINT_02_FINAL_REVIEW.md` for the authoritative current state; the sections below are the
+> original sprint record with the Chart.js and test-count facts corrected in place.
 
 ---
 
@@ -133,8 +143,9 @@ every pre-existing test.
   New: trend arithmetic; vitals validation + formula-guard + BP two-row semantics; media
   ref generation / signature / expiry; reports metadata + timeline event; dashboard assembly +
   zero-write proof; `vital → timeline` and `reports media privacy` integration.
-- **Frontend:** 14 files, **44 tests** pass (**+9**). New: vitals/reports/dashboard API modules;
-  chart geometry; non-diagnostic trend copy; `VitalChart` a11y (image label + data-table alternative).
+- **Frontend:** 14 files, **46 tests** pass. New: vitals/reports/dashboard API modules;
+  Chart.js line-config builder + label formatting; non-diagnostic trend copy; `VitalChart` a11y
+  (image label + data-table alternative).
 
 ### BP acceptance-test coverage (decision 3)
 
@@ -155,7 +166,7 @@ Reproduced the full CI gate (`.github/workflows/ci.yml`) locally, all green:
 | `pnpm lint` + `pnpm -r lint` (incl. no-sheets / no-network boundary rules) | ✅                                                                            |
 | `pnpm format:check`                                                        | ✅                                                                            |
 | `pnpm -r typecheck` (tsc + astro check, 0 errors)                          | ✅                                                                            |
-| `pnpm -r test` (205 tests)                                                 | ✅                                                                            |
+| `pnpm -r test` (207 tests: 161 backend + 46 web)                           | ✅                                                                            |
 | `pnpm -r build`                                                            | ✅                                                                            |
 | Secret scanning (gitleaks)                                                 | ✅ no secrets committed — media key derived at runtime from a Script Property |
 
@@ -188,10 +199,13 @@ Every Sprint 01 control is preserved and extended, none weakened:
 1. **Report media is metadata-only in v1.** The client sends an opaque upload handle (the chosen
    file's name); byte transfer to private Drive + OCR (`docs/07-AI/106`) is a later sprint. The
    **privacy boundary is already fully enforced** (private ref + short-lived view refs).
-2. **Charts use inline SVG, not Chart.js.** The spec named Chart.js; an accessible inline-SVG
-   sparkline was chosen instead to keep the build hermetic and honour the R-3 bundle-bloat
-   mitigation (zero added dependency). It meets the §8 acceptance criteria — AA, data-table
-   alternative, reduced-motion respected (no animation).
+2. **Charts use Chart.js** (docs/ADR/ADR-003-Astro, docs/04-Architecture/51 §9), rendered on a
+   `<canvas>` and **dynamically imported** at the island so the library (~71 kB gzip, emitted as a
+   separate `_astro/auto.*.js` chunk) never enters the initial bundle and loads only when a vitals
+   chart mounts — honouring the R-3 bundle-bloat mitigation while meeting the frozen architecture
+   mandate. Accessibility is preserved: `role="img"` factual label, an always-present data-table
+   alternative, and `prefers-reduced-motion` disables animation (§8 AA). The `charts.test.ts` suite
+   was updated from SVG-geometry assertions to the Chart.js config builder (equivalent coverage).
 3. **Clinical reference bands intentionally absent** (approved decision 1) — deferred to sourced work.
 4. **Dashboard `next actions` are minimal** — appointments/medicines/vaccinations modules are not
    in Sprint 02, so those sources are empty by design; the status + metrics + recent-timeline

@@ -1,12 +1,14 @@
 /**
- * Chart geometry — pure functions that turn a vital series into SVG sparkline
- * coordinates (docs/03-UX/35 §8, docs/06-Modules/83 FR-2). No rendering, no
- * DOM, no library: keeping the maths pure makes the charts testable and keeps
- * the bundle small (docs/20-Implementation/207 R-3 — chart-JS bloat mitigation).
- *
- * The rendered chart is always paired with a data-table alternative and an
- * accessible text summary (docs/03-UX/40); this module only computes geometry.
+ * Chart configuration — pure functions that turn a vital series into a Chart.js
+ * line-chart configuration (docs/ADR/ADR-003-Astro, docs/04-Architecture/51 §9,
+ * docs/03-UX/35 §8, docs/06-Modules/83 FR-2). Kept pure (no DOM, no rendering)
+ * so the config is unit-testable; `VitalChart` renders it onto a <canvas> in the
+ * browser and always pairs it with a data-table alternative and a text summary
+ * (docs/03-UX/40). Chart.js itself is dynamically imported at the island, so it
+ * never enters the initial bundle (docs/20-Implementation/207 R-3 — bundle-bloat
+ * mitigation). No reference bands, no thresholds: surfacing-only (83 BR-1).
  */
+import type { ChartConfiguration } from 'chart.js';
 
 export interface ChartPoint {
   value: number;
@@ -14,64 +16,79 @@ export interface ChartPoint {
   at: string;
 }
 
-export interface SparklineGeometry {
-  width: number;
-  height: number;
-  /** SVG path `d` through the points, or `''` when there is nothing to draw. */
-  path: string;
-  dots: { x: number; y: number; value: number; at: string }[];
-  min: number;
-  max: number;
-}
-
-export interface SparklineOptions {
-  width?: number;
-  height?: number;
-  padding?: number;
+export interface LineChartOptions {
+  label: string;
+  unit: string;
+  /** When true, disable animation to honour prefers-reduced-motion (35 §8, 40). */
+  reducedMotion?: boolean;
+  /** Resolved line/point colour (a semantic design-token value, 35 BR-1). */
+  color?: string;
+  /** Resolved gridline colour (a semantic design-token value). */
+  gridColor?: string;
 }
 
 /**
- * Builds sparkline geometry for a series, oldest→newest. The y-axis is scaled
- * to the data range and inverted (SVG y grows downward). A flat series (equal
- * min/max) is drawn along the vertical mid-line rather than dividing by zero.
+ * Default line colour: `--color-action` (sage-600). Used for SSR/tests where the
+ * DOM CSS custom property is unavailable; the island resolves the live token.
  */
-export function buildSparkline(
-  points: ChartPoint[],
-  options: SparklineOptions = {},
-): SparklineGeometry {
-  const width = options.width ?? 320;
-  const height = options.height ?? 96;
-  const padding = options.padding ?? 8;
+export const DEFAULT_CHART_COLOR = '#3e6b4f';
+export const DEFAULT_GRID_COLOR = 'rgba(120, 113, 108, 0.18)';
 
-  if (points.length === 0) {
-    return { width, height, path: '', dots: [], min: 0, max: 0 };
-  }
-
-  const values = points.map((p) => p.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min;
-
-  const innerW = width - padding * 2;
-  const innerH = height - padding * 2;
-
-  const xAt = (index: number): number =>
-    points.length === 1 ? width / 2 : padding + (innerW * index) / (points.length - 1);
-  const yAt = (value: number): number =>
-    span === 0 ? height / 2 : padding + innerH * (1 - (value - min) / span);
-
-  const dots = points.map((p, index) => ({
-    x: round(xAt(index)),
-    y: round(yAt(p.value)),
-    value: p.value,
-    at: p.at,
-  }));
-
-  const path = dots.map((d, index) => `${index === 0 ? 'M' : 'L'} ${d.x} ${d.y}`).join(' ');
-
-  return { width, height, path, dots, min, max };
+/** Formats an ISO datetime into a short, locale-aware axis label. */
+export function formatChartLabel(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function round(n: number): number {
-  return Math.round(n * 100) / 100;
+/**
+ * Builds a calm, single-series Chart.js line config for a vital series
+ * (oldest→newest). Legend hidden, gentle tension, small points — calm, not
+ * alarmist (docs/00-Vision/04). Animation is disabled under reduced motion.
+ */
+export function buildLineChartConfig(
+  points: ChartPoint[],
+  options: LineChartOptions,
+): ChartConfiguration<'line'> {
+  const {
+    label,
+    unit,
+    reducedMotion = false,
+    color = DEFAULT_CHART_COLOR,
+    gridColor = DEFAULT_GRID_COLOR,
+  } = options;
+
+  return {
+    type: 'line',
+    data: {
+      labels: points.map((p) => formatChartLabel(p.at)),
+      datasets: [
+        {
+          label: `${label} (${unit})`,
+          data: points.map((p) => p.value),
+          borderColor: color,
+          backgroundColor: color,
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 4,
+          tension: 0.25,
+          fill: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: reducedMotion ? false : { duration: 300 },
+      interaction: { mode: 'nearest', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } },
+        y: { grid: { color: gridColor }, ticks: { maxTicksLimit: 4 } },
+      },
+    },
+  };
 }
