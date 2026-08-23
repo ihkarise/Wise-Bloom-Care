@@ -320,6 +320,100 @@ export interface AuditRecord {
   meta?: Record<string, string | number | boolean>;
 }
 
+// ---------------------------------------------------------------------------
+// Derived, surfacing-only views (docs/04-Architecture/52 §6, docs/06-Modules/81,83)
+// ---------------------------------------------------------------------------
+//
+// These are NEVER persisted — they are computed on read from owned records and
+// returned for display only. They carry no clinical interpretation: trends are
+// arithmetic (current/previous/delta/direction), never diagnostic
+// (docs/06-Modules/83 BR-1, docs/02-Research/28). Reference bands (ACOG/FIGO)
+// are deliberately out of scope here (Sprint 02 decision) — arithmetic only.
+
+/** Direction of a trend, or that there is not yet enough data to say. */
+export type TrendDirection = 'up' | 'down' | 'steady' | 'insufficient_data';
+
+/** One point in a vital series — the value and when it was measured. */
+export interface TrendPoint {
+  value: number;
+  measured_at: ISODateTime;
+}
+
+/**
+ * Arithmetic trend over a single numeric vital series (docs/04-Architecture/52
+ * §6 "current/previous/trend"). `delta = current - previous`. `direction` is
+ * the sign of the delta (`steady` when equal). All surfacing-only — never a
+ * diagnosis (docs/06-Modules/83 BR-1).
+ */
+export interface TrendResult {
+  type: VitalType;
+  /** The series context this trend describes (e.g. systolic/diastolic for BP); absent for single-series vitals. */
+  context?: VitalContext;
+  unit: string;
+  current: TrendPoint | null;
+  previous: TrendPoint | null;
+  /** `current - previous`, or `null` when fewer than two samples exist. */
+  delta: number | null;
+  direction: TrendDirection;
+  /** Number of samples the trend was computed from — lets the UI avoid faking a trend from sparse data (83 §10). */
+  sampleCount: number;
+}
+
+/** One paired blood-pressure reading — systolic and diastolic sharing a `measured_at`. */
+export interface BloodPressureReading {
+  measured_at: ISODateTime;
+  systolic: number | null;
+  diastolic: number | null;
+}
+
+/**
+ * Blood pressure is stored as two Vital rows (systolic + diastolic) sharing a
+ * `measured_at` (frozen domain model — docs/05-Data/72 §5). This view pairs
+ * them back into logical readings and a trend per component, so the UI treats
+ * one BP reading as one thing while storage stays two rows.
+ */
+export interface BloodPressureTrend {
+  systolic: TrendResult;
+  diastolic: TrendResult;
+  /** The paired readings, newest last, for charting one BP reading as one point. */
+  readings: BloodPressureReading[];
+}
+
+/**
+ * A single at-a-glance metric tile on the dashboard for a single-value vital
+ * (weight, blood sugar) (docs/06-Modules/81 FR-4). Blood pressure is a paired
+ * reading and is surfaced separately via `DashboardSummary.blood_pressure`.
+ */
+export interface DashboardMetric {
+  vital_type: Exclude<VitalType, 'bp'>;
+  label: string;
+  trend: TrendResult;
+}
+
+/** Life-stage status header for the dashboard (docs/06-Modules/81 FR-1). */
+export interface DashboardStatus {
+  life_stage: LifeStage;
+  /** Gestational age in weeks when in an active pregnancy with a known LMP; else absent. */
+  pregnancy_weeks?: number;
+}
+
+/**
+ * The dashboard read model (docs/06-Modules/81). Pure aggregation across owned
+ * records via services — the dashboard owns no domain data and writes nothing
+ * (81 §1, docs/00-Vision/13 BR-1). Surfacing-only, calm, non-diagnostic.
+ */
+export interface DashboardSummary {
+  family_id: UUID;
+  generated_at: ISODateTime;
+  status: DashboardStatus;
+  /** Latest single-value metric tiles with arithmetic trend (weight, blood sugar). */
+  metrics: DashboardMetric[];
+  /** Paired blood-pressure trend tile, when any BP has been logged (81 FR-4). */
+  blood_pressure?: BloodPressureTrend;
+  /** Most-recent timeline events, newest first (81 FR-5). */
+  recent_timeline: Event[];
+}
+
 /** Knowledge-base content index item (docs/05-Data/70 §ContentItem). Reference data. */
 export interface ContentItem {
   content_id: UUID;

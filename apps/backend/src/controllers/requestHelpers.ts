@@ -31,6 +31,14 @@ export function asOptionalString(value: unknown, field: string): string | undefi
   return asString(value, field);
 }
 
+/** Required finite number field. Rejects `NaN`/`Infinity` and non-numbers. */
+export function asNumber(value: unknown, field: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new ApiException('validation_failed', 422, `Missing or invalid field: ${field}`);
+  }
+  return value;
+}
+
 /** Reads a query-string parameter (docs/04-Architecture/56 §3). */
 export function queryParam(request: ApiRequest, key: string): string | undefined {
   return request.query?.[key];

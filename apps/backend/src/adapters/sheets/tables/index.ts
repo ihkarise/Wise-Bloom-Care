@@ -7,10 +7,11 @@
  * integrity that Sheets itself cannot (54 §5). This table is the *only* place
  * that knows the physical layout; everything above it speaks domain entities.
  *
- * Sprint 01's entities (users, sessions, families, maternal, pregnancyEpisodes,
- * events, audit — docs/20-Implementation/206 §4) each have their own file, one
- * responsibility per module. Entities not yet owned by a shipped module stay
- * inline below until their sprint gives them a dedicated file.
+ * Shipped-module entities each have their own file, one responsibility per
+ * module: Sprint 01's users, sessions, families, maternal, pregnancyEpisodes,
+ * events, audit (docs/20-Implementation/206 §4); Sprint 02's vitals and reports
+ * (docs/20-Implementation/207 §4). Entities not yet owned by a shipped module
+ * stay inline below until their sprint gives them a dedicated file.
  */
 
 import { AUDIT_RECORD_TABLE } from './audit';
@@ -18,9 +19,11 @@ import { EVENT_TABLE } from './events';
 import { FAMILY_TABLE } from './families';
 import { MATERNAL_RECORD_TABLE } from './maternal';
 import { PREGNANCY_EPISODE_TABLE } from './pregnancyEpisodes';
+import { REPORT_TABLE } from './reports';
 import { SESSION_TABLE } from './sessions';
 import { f, type TableMapping } from './types';
 import { USER_TABLE } from './users';
+import { VITAL_TABLE } from './vitals';
 
 import type { EntityName } from '@wise-bloom/domain-types';
 
@@ -59,23 +62,7 @@ export const TABLES: Record<EntityName, TableMapping> = {
       { field: 'episode_id', references: 'PregnancyEpisode' },
     ],
   },
-  Vital: {
-    entity: 'Vital',
-    tab: 'vitals',
-    pk: 'vital_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [
-      f('vital_id', 'string'),
-      f('subject_id', 'string'),
-      f('type', 'string'),
-      f('value', 'number'),
-      f('unit', 'string'),
-      f('context', 'string', true),
-      f('measured_at', 'datetime'),
-    ],
-    foreignKeys: [],
-  },
+  Vital: VITAL_TABLE,
   GrowthMeasurement: {
     entity: 'GrowthMeasurement',
     tab: 'growth_measurements',
@@ -124,21 +111,7 @@ export const TABLES: Record<EntityName, TableMapping> = {
     ],
     foreignKeys: [{ field: 'child_id', references: 'ChildRecord' }],
   },
-  Report: {
-    entity: 'Report',
-    tab: 'reports',
-    pk: 'report_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [
-      f('report_id', 'string'),
-      f('subject_id', 'string'),
-      f('kind', 'string'),
-      f('media_ref', 'string'),
-      f('uploaded_at', 'datetime'),
-    ],
-    foreignKeys: [],
-  },
+  Report: REPORT_TABLE,
   JournalEntry: {
     entity: 'JournalEntry',
     tab: 'journal',

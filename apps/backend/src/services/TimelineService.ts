@@ -117,11 +117,10 @@ export class TimelineService {
   }
 
   /**
-   * The continuous, paginated timeline for a family (docs/04-Architecture/56
-   * §3, §5). Returns one entry per logical event — the current version of
-   * each correction lineage — ordered by when it occurred.
+   * The current (max-version) row of every correction lineage for a family,
+   * ordered ascending by when it occurred. Shared by `list` and `recent`.
    */
-  list(familyId: UUID, options: ListTimelineOptions = {}): TimelinePage {
+  private orderedCurrentEvents(familyId: UUID): Event[] {
     const all = this.storage.query('Event', { family_id: familyId });
 
     const currentByLineage = new Map<UUID, Event>();
@@ -133,11 +132,20 @@ export class TimelineService {
       }
     }
 
-    const ordered = [...currentByLineage.values()].sort(
+    return [...currentByLineage.values()].sort(
       (a, b) =>
         Date.parse(a.occurred_at) - Date.parse(b.occurred_at) ||
         a.event_id.localeCompare(b.event_id),
     );
+  }
+
+  /**
+   * The continuous, paginated timeline for a family (docs/04-Architecture/56
+   * §3, §5). Returns one entry per logical event — the current version of
+   * each correction lineage — ordered by when it occurred.
+   */
+  list(familyId: UUID, options: ListTimelineOptions = {}): TimelinePage {
+    const ordered = this.orderedCurrentEvents(familyId);
 
     const limit = options.limit ?? DEFAULT_PAGE_SIZE;
     const start = parseCursor(options.cursor);
@@ -148,5 +156,14 @@ export class TimelineService {
       items,
       ...(nextIndex < ordered.length ? { nextCursor: String(nextIndex) } : {}),
     };
+  }
+
+  /**
+   * The most recent logical events for a family, newest first — for the
+   * dashboard's recent-timeline preview (docs/06-Modules/81 FR-5). Read-only.
+   */
+  recent(familyId: UUID, limit = 5): Event[] {
+    const ordered = this.orderedCurrentEvents(familyId);
+    return ordered.slice(Math.max(0, ordered.length - limit)).reverse();
   }
 }
