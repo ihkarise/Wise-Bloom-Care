@@ -49,6 +49,47 @@ jobs:
             echo "SKIP_GAS=1" >> "$GITHUB_ENV"
           fi
 
+      # Structure-only diagnostic for the clasp credential file. Prints ONLY the
+      # shape of CLASPRC_JSON (presence, JSON validity, key NAMES, and whether it
+      # matches a known clasp credential layout) — never any secret value. Also
+      # writes the file exactly as "Configure clasp" does, to catch shell-quoting
+      # corruption. Temporary and self-cleaning.
+      - name: Diagnose CLASPRC_JSON (structure only, no secret values)
+        if: ${{ env.SKIP_GAS != '1' }}
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          printf '%s' '${{ secrets.CLASPRC_JSON }}' > "$HOME/.clasprc.diag.json"
+          node -e '
+            const fs = require("fs");
+            const os = require("os");
+            const fromEnv = process.env.CLASPRC_JSON || "";
+            const diagPath = os.homedir() + "/.clasprc.diag.json";
+            const fromFile = fs.existsSync(diagPath) ? fs.readFileSync(diagPath, "utf8") : "";
+            const report = (label, raw) => {
+              console.log("== " + label + " ==");
+              console.log("present:", raw.length > 0);
+              console.log("length_bucket:", raw.length === 0 ? "empty" : (raw.length < 200 ? "small_<200" : "ok_>=200"));
+              let obj;
+              try { obj = JSON.parse(raw); } catch (e) { console.log("valid_json:", false, "(" + e.name + ")"); return; }
+              console.log("valid_json:", true);
+              const keys = obj && typeof obj === "object" ? Object.keys(obj) : [];
+              console.log("top_level_keys:", JSON.stringify(keys));
+              const has = (k) => keys.includes(k);
+              console.log("looks_like_clasprc_v2 (token+oauth2ClientSettings):", has("token") && has("oauth2ClientSettings"));
+              console.log("looks_like_clasprc_v3 (tokens):", has("tokens"));
+              console.log("looks_like_project_dot_clasp (scriptId/rootDir):", has("scriptId") || has("rootDir"));
+              const subkeys = (k) => (obj[k] && typeof obj[k] === "object") ? Object.keys(obj[k]) : null;
+              if (has("token")) console.log("token subkeys (names only):", JSON.stringify(subkeys("token")));
+              if (has("tokens")) console.log("tokens subkeys (names only):", JSON.stringify(subkeys("tokens")));
+              if (has("oauth2ClientSettings")) console.log("oauth2ClientSettings subkeys (names only):", JSON.stringify(subkeys("oauth2ClientSettings")));
+            };
+            report("from_secret_env", fromEnv);
+            report("from_written_file", fromFile);
+            console.log("env_equals_written_file:", fromEnv === fromFile);
+          '
+          rm -f "$HOME/.clasprc.diag.json"
+
       - name: Configure clasp for dev
         if: ${{ env.SKIP_GAS != '1' }}
         run: |
