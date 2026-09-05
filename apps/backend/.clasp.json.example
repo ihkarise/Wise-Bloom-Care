@@ -1,5 +1,5 @@
 {
-  "_comment": "Copy to .clasp.json per environment and fill in the real scriptId. Real .clasp.json is git-ignored (docs/04-Architecture/60 BR-3, docs/09-Security/124). One Apps Script project + spreadsheet per environment (dev/staging/prod).",
+  "_comment": "Copy to .clasp.json per environment and fill in the real scriptId. Real .clasp.json is git-ignored (docs/04-Architecture/60 BR-3, docs/09-Security/124). One Apps Script project + spreadsheet per environment (dev/staging/prod). rootDir is the GAS bundle output (gas-dist) produced by `pnpm build:gas` — NOT src: Apps Script has no module system, so the modular TypeScript source must be bundled into gas-dist/main.js (global doGet/doPost) before pushing.",
   "scriptId": "<DEV_APPS_SCRIPT_ID>",
-  "rootDir": "src"
+  "rootDir": "gas-dist"
 }

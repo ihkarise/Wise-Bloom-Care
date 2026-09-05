@@ -9,6 +9,7 @@ build/
 apps/web/dist/
 apps/web/src/env.d.ts
 apps/backend/dist/
+apps/backend/gas-dist/
 
 # Environment & secrets (docs/04-Architecture/60 BR-3, docs/09-Security/124)
 .env
