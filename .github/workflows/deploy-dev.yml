@@ -107,3 +107,23 @@ jobs:
         if: ${{ env.SKIP_GAS != '1' }}
         working-directory: apps/backend
         run: npx --yes @google/clasp@3.4.1 push --force
+
+      # `push` updates HEAD, but the public /exec Web App URL serves a pinned
+      # deployment version — so without this the pushed code would not be live at
+      # the URL the frontend calls. `deploy -i <deploymentId>` cuts a new version
+      # from HEAD and points the SAME deployment (same /exec URL) at it. The
+      # deployment id is the public `AKfycb…` segment of the /exec URL
+      # (docs/04-Architecture/60 §4) — not a secret.
+      - name: Redeploy dev Web App to the pushed code
+        if: ${{ env.SKIP_GAS != '1' }}
+        working-directory: apps/backend
+        env:
+          EXEC_URL: ${{ vars.PUBLIC_API_BASE_URL || 'https://script.google.com/macros/s/AKfycbwVeKvG_E-B--ly4uRYC6gRd7facrRqydAIJKxcM7NVfXT2hvHghlKXK_gvzkH1H6oe/exec' }}
+        run: |
+          DEPLOYMENT_ID="$(printf '%s' "$EXEC_URL" | sed -E 's#.*/macros/s/([^/]+)/exec/?.*#\1#')"
+          if [ -z "$DEPLOYMENT_ID" ] || [ "$DEPLOYMENT_ID" = "$EXEC_URL" ]; then
+            echo "Could not parse a deployment id from the /exec URL; skipping redeploy." >&2
+            exit 1
+          fi
+          echo "Updating existing Web App deployment (id length ${#DEPLOYMENT_ID}) to the pushed HEAD."
+          npx --yes @google/clasp@3.4.1 deploy -i "$DEPLOYMENT_ID" -d "sprint-02 dev $(git rev-parse --short HEAD)"
