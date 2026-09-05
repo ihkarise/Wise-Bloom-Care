@@ -96,7 +96,14 @@ jobs:
           printf '%s' '${{ secrets.CLASPRC_JSON }}' > "$HOME/.clasprc.json"
           printf '{"scriptId":"%s","rootDir":"src"}' '${{ secrets.DEV_SCRIPT_ID }}' > apps/backend/.clasp.json
 
+      # clasp is pinned for reproducibility. v3.x reads the current
+      # `~/.clasprc.json` credential shape ({"tokens":{"default":{…}}}) that
+      # `clasp login` now writes; the older 2.4.2 pin expected the legacy
+      # {"token":…,"oauth2ClientSettings":…} shape and failed with
+      # "Cannot read properties of undefined (reading 'access_token')". v3 reads
+      # $HOME/.clasprc.json by default and accepts the same .clasp.json
+      # (scriptId/rootDir) and `push --force`.
       - name: Push backend to dev Apps Script
         if: ${{ env.SKIP_GAS != '1' }}
         working-directory: apps/backend
-        run: npx --yes @google/clasp@2.4.2 push --force
+        run: npx --yes @google/clasp@3.4.1 push --force
