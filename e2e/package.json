@@ -1,0 +1,12 @@
+{
+  "name": "wise-bloom-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Standalone Playwright E2E for the deployed Sprint 02 staging site (GitHub Pages -> Apps Script -> Google Sheet). Not a pnpm workspace member; installs its own deps in CI.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0"
+  }
+}

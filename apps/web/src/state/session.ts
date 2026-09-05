@@ -18,6 +18,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { ApiClient } from '../api/client';
+import { withBase } from '../lib/paths';
 
 import type { AuthSession, PublicUser } from '@wise-bloom/api-contract';
 
@@ -103,7 +104,7 @@ export function useAuthenticatedClient(apiBaseUrl: string): {
 
   useEffect(() => {
     if (checked && !stored && hasWindow()) {
-      window.location.assign('/login');
+      window.location.assign(withBase('/login'));
     }
   }, [checked, stored]);
 

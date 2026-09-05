@@ -49,7 +49,7 @@ describe('auth api', () => {
     expect(url).toContain('/v1/auth/login');
   });
 
-  it('logout and refresh use the authenticated client (bearer header present)', async () => {
+  it('logout uses the authenticated client (token on the GAS-readable query param)', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ success: true }));
     const client = new ApiClient({
       baseUrl: 'https://x.test',
@@ -58,8 +58,12 @@ describe('auth api', () => {
     });
 
     await logout(client);
-    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer session-token');
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toContain('/v1/auth/logout');
+    // The token rides as a query param (Apps Script cannot read an Authorization
+    // header); no preflight-triggering header is sent.
+    expect(url).toContain('token=session-token');
+    expect((init.headers as Record<string, string>)['Authorization']).toBeUndefined();
   });
 
   it('refresh calls /v1/auth/refresh', async () => {

@@ -9,7 +9,9 @@ import type { Linter } from 'eslint';
  */
 const config: Linter.Config[] = [
   {
-    ignores: ['docs/**', 'knowledge-base/**'],
+    // `e2e/` is a standalone Playwright project outside the pnpm workspace; it
+    // installs its own deps in CI and is linted/typechecked by Playwright itself.
+    ignores: ['docs/**', 'knowledge-base/**', 'e2e/**'],
   },
   ...baseEslintConfig,
 ];

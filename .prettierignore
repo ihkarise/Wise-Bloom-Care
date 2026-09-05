@@ -13,3 +13,6 @@ knowledge-base/
 ARCHITECTURE_REVIEW_REPORT.md
 FINAL_REPOSITORY_REVIEW.md
 IMPLEMENTATION_READINESS_REPORT.md
+
+# Standalone Playwright E2E (installs its own deps in CI; not a workspace member)
+e2e/

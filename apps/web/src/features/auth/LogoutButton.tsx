@@ -7,6 +7,7 @@
 import { useState, type ReactElement } from 'react';
 
 import { logout } from '../../api/auth';
+import { withBase } from '../../lib/paths';
 import { useAuthenticatedClient } from '../../state/session';
 
 export interface LogoutButtonProps {
@@ -30,7 +31,7 @@ export default function LogoutButton({ apiBaseUrl }: LogoutButtonProps): ReactEl
       await logout(client);
     } finally {
       setStored(null);
-      window.location.assign('/login');
+      window.location.assign(withBase('/login'));
     }
   }
 

@@ -44,4 +44,32 @@ describe('toApiRequest (GAS entry-point translation)', () => {
     expect(request.token).toBeUndefined();
     expect(request.body).toEqual({ email: 'a' });
   });
+
+  it('reads idempotencyKey and correlationId from query params (the GAS-readable seam)', () => {
+    // The frontend sends these as query params because GAS cannot read request
+    // headers (apps/web/src/api/client.ts); they must land on the request, not
+    // in the generic domain query bag.
+    const request = toApiRequest(
+      'POST',
+      gasPost(
+        {
+          path: '/vitals',
+          token: 'sess-123',
+          idempotencyKey: 'idem-abc',
+          correlationId: 'corr-xyz',
+        },
+        { vital_type: 'weight', value: 60 },
+      ),
+    );
+    expect(request.idempotencyKey).toBe('idem-abc');
+    expect(request.correlationId).toBe('corr-xyz');
+    expect(request.query?.idempotencyKey).toBeUndefined();
+    expect(request.query?.correlationId).toBeUndefined();
+    expect(request.body).toEqual({ vital_type: 'weight', value: 60 });
+  });
+
+  it('rejects a malformed JSON body rather than silently accepting it', () => {
+    const badPost = { parameter: { path: '/vitals' }, postData: { contents: '{ not json' } };
+    expect(() => toApiRequest('POST', badPost as unknown as DoPost)).toThrow();
+  });
 });

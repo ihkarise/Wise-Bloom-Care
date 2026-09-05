@@ -148,5 +148,20 @@ jobs:
                 || echo "::warning::Could not refresh deployment ${DEP_ID}"
             done < /tmp/dep-ids.txt
           else
-            echo "::warning::No non-HEAD deployment found to refresh; the /exec URL may need a manual re-publish."
+            echo "No versioned Web App deployment in this project yet — creating one from HEAD…"
+            npx --yes @google/clasp@3.4.1 deploy -d "$DESC" || echo "::warning::create-deployment failed"
           fi
+          echo '== Deployments after refresh/create (the /exec URL uses the non-HEAD deploymentId) =='
+          npx --yes @google/clasp@3.4.1 deployments --json | node -e '
+            const fs=require("fs"); let raw=""; process.stdin.on("data",d=>raw+=d).on("end",()=>{
+              let data; try{data=JSON.parse(raw)}catch{console.log(raw);return;}
+              const list=Array.isArray(data)?data:(data.deployments||[]);
+              for(const d of list){
+                const id=d.deploymentId||d.id;
+                const v=(d.deploymentConfig||d).versionNumber ?? d.versionNumber;
+                const kind = (v===undefined||v===null) ? "HEAD" : ("v"+v);
+                console.log(kind+"  deploymentId="+id);
+                if(v!==undefined && v!==null) console.log("  EXEC_URL=https://script.google.com/macros/s/"+id+"/exec");
+              }
+            });
+          ' || true
