@@ -30,7 +30,7 @@ describe('reports api', () => {
     });
     expect(result.report.report_id).toBe('r1');
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toContain('/v1/reports');
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/reports');
     expect(init.method).toBe('POST');
   });
 
@@ -46,7 +46,7 @@ describe('reports api', () => {
     );
     await getReportMedia(client(fetchImpl as unknown as typeof fetch), 'r1');
     const [url] = fetchImpl.mock.calls[0] as unknown as [string];
-    expect(url).toContain('/v1/reports/media');
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/reports/media');
     expect(url).toContain('report_id=r1');
   });
 });

@@ -33,7 +33,8 @@ describe('auth api', () => {
 
     expect(result.session.token).toBe('new-token');
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toContain('/v1/auth/register');
+    // The route rides as the GAS-readable `path` query param, not the pathname.
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/auth/register');
     expect(init.method).toBe('POST');
   });
 
@@ -46,7 +47,7 @@ describe('auth api', () => {
 
     await login(client, { email: 'jane@example.com', password: 'x' });
     const [url] = fetchImpl.mock.calls[0] as unknown as [string];
-    expect(url).toContain('/v1/auth/login');
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/auth/login');
   });
 
   it('logout uses the authenticated client (token on the GAS-readable query param)', async () => {
@@ -59,7 +60,7 @@ describe('auth api', () => {
 
     await logout(client);
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toContain('/v1/auth/logout');
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/auth/logout');
     // The token rides as a query param (Apps Script cannot read an Authorization
     // header); no preflight-triggering header is sent.
     expect(url).toContain('token=session-token');
@@ -76,6 +77,6 @@ describe('auth api', () => {
 
     await refresh(client);
     const [url] = fetchImpl.mock.calls[0] as unknown as [string];
-    expect(url).toContain('/v1/auth/refresh');
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/auth/refresh');
   });
 });

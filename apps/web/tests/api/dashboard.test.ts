@@ -27,6 +27,6 @@ describe('dashboard api', () => {
     const result = await getDashboard(client);
     expect(result.dashboard.family_id).toBe('f1');
     const [url] = fetchImpl.mock.calls[0] as unknown as [string];
-    expect(url).toContain('/v1/dashboard');
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/dashboard');
   });
 });

@@ -37,7 +37,7 @@ describe('vitals api', () => {
     });
     expect(result.reading).toBe('single');
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toContain('/v1/vitals');
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/vitals');
     expect(init.method).toBe('POST');
   });
 

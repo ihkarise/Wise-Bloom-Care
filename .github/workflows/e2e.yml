@@ -23,6 +23,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # TEMP DIAGNOSTIC (removed before merge): probe the deployed Apps Script
+      # /exec directly from the runner (which can reach script.google.com) to
+      # tell a backend-config failure apart from a frontend transport bug.
+      # Synthetic data only; hits only the public /exec URL; no secrets.
+      - name: Backend transport probe (direct /exec, diagnostic)
+        env:
+          API: 'https://script.google.com/macros/s/AKfycbxGTss7Hpkul4y299TGsTxQj2F26k2DhbHOp9TdvzrLwZJ9b183b5HOUtq6Iu700Cpx/exec'
+        run: |
+          set +e
+          TS=$(date +%s)
+          echo "=== A. Protected GET, correct GAS mechanism (path as query param) — expect an 'unauthenticated' JSON envelope if config is healthy ==="
+          curl -sS -i -L "$API?path=%2Fv1%2Ftimeline&correlationId=probe-$TS" | head -50
+          echo; echo
+          echo "=== B. Register POST, correct GAS mechanism (path query param + text/plain JSON body) — expect a JSON user/session envelope if config is healthy ==="
+          curl -sS -i -L -X POST \
+            -H "Content-Type: text/plain;charset=UTF-8" \
+            --data "{\"email\":\"wb-probe-$TS@example.com\",\"password\":\"Synthetic-Passw0rd!\",\"disclaimer_ack\":true,\"maternal_name\":\"Probe Mother\"}" \
+            "$API?path=%2Fv1%2Fauth%2Fregister&correlationId=probe-$TS&idempotencyKey=probe-$TS" | head -80
+          echo; echo
+          echo "=== C. Register POST, OLD buggy mechanism (route in the pathname, no path param) — expected to resolve to POST / => not_found ==="
+          curl -sS -i -L -X POST \
+            -H "Content-Type: text/plain;charset=UTF-8" \
+            --data "{\"email\":\"wb-probe2-$TS@example.com\",\"password\":\"Synthetic-Passw0rd!\",\"disclaimer_ack\":true,\"maternal_name\":\"Probe Mother\"}" \
+            "$API/v1/auth/register?correlationId=probe2-$TS&idempotencyKey=probe2-$TS" | head -80
+          echo; echo "=== probe done ==="
+          exit 0
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

@@ -46,7 +46,11 @@ describe('ApiClient', () => {
     expect(result.items).toEqual([]);
 
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toContain('/v1/timeline');
+    // The versioned route travels as the `path` query param (the only thing GAS
+    // reads), never in the URL pathname — the sub-path after `/exec` is GAS
+    // `pathInfo`, which the backend ignores.
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/timeline');
+    expect(new URL(url).pathname).not.toContain('/timeline');
     // The token reaches the backend through the GAS-readable `token` query param.
     expect(url).toContain('token=synthetic-token');
     assertNoPreflightHeaders(init.headers as Record<string, string>);
