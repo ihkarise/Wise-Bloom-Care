@@ -37,8 +37,9 @@ jobs:
       - name: Run Sprint 02 staging smoke test
         working-directory: e2e
         env:
-          E2E_BASE_URL: ${{ vars.PUBLIC_SITE_URL || 'https://ihkarise.github.io/Wise-Bloom-Care' }}
-          E2E_API_URL: ${{ vars.PUBLIC_API_BASE_URL || 'https://script.google.com/macros/s/AKfycbwVeKvG_E-B--ly4uRYC6gRd7facrRqydAIJKxcM7NVfXT2hvHghlKXK_gvzkH1H6oe/exec' }}
+          E2E_BASE_URL: 'https://ihkarise.github.io/Wise-Bloom-Care'
+          # The dev Web App /exec in the DEV_SCRIPT_ID project (ANYONE_ANONYMOUS).
+          E2E_API_URL: 'https://script.google.com/macros/s/AKfycbxGTss7Hpkul4y299TGsTxQj2F26k2DhbHOp9TdvzrLwZJ9b183b5HOUtq6Iu700Cpx/exec'
         run: npx playwright test
 
       - name: Upload Playwright report

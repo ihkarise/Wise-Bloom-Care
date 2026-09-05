@@ -16,7 +16,7 @@ const BASE = (process.env.E2E_BASE_URL ?? 'https://ihkarise.github.io/Wise-Bloom
 );
 const API = (
   process.env.E2E_API_URL ??
-  'https://script.google.com/macros/s/AKfycbwVeKvG_E-B--ly4uRYC6gRd7facrRqydAIJKxcM7NVfXT2hvHghlKXK_gvzkH1H6oe/exec'
+  'https://script.google.com/macros/s/AKfycbxGTss7Hpkul4y299TGsTxQj2F26k2DhbHOp9TdvzrLwZJ9b183b5HOUtq6Iu700Cpx/exec'
 ).replace(/\/$/, '');
 
 const stamp = Date.now();
