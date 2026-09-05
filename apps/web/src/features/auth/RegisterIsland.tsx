@@ -10,6 +10,7 @@ import { useId, useState, type FormEvent, type ReactElement } from 'react';
 import { register } from '../../api/auth';
 import { ApiClient } from '../../api/client';
 import { friendlyErrorMessage } from '../../lib/errors';
+import { withBase } from '../../lib/paths';
 import { useSession } from '../../state/session';
 import DisclaimerGate from './DisclaimerGate';
 
@@ -48,7 +49,7 @@ export default function RegisterIsland({ apiBaseUrl }: RegisterIslandProps): Rea
         maternal_name: maternalName,
       });
       setStored({ user: result.user, session: result.session });
-      window.location.assign('/app');
+      window.location.assign(withBase('/app'));
     } catch (caught) {
       setError(friendlyErrorMessage(caught));
     } finally {
@@ -137,7 +138,7 @@ export default function RegisterIsland({ apiBaseUrl }: RegisterIslandProps): Rea
 
       <p className="text-small text-text-secondary">
         Already have an account?{' '}
-        <a href="/login" className="text-link underline">
+        <a href={withBase('/login')} className="text-link underline">
           Log in
         </a>
         .

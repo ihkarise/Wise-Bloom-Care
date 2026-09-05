@@ -5,12 +5,20 @@
  * swapping backend storage causes zero client changes (51 BR-2, NFR-6).
  *
  * This is the shared low-level transport only: URL/query building, headers,
- * idempotency keys, and error envelopes. Domain-specific calls live in
- * sibling files (`auth.ts`, `family.ts`, `maternal.ts`, `timeline.ts`, ...),
- * one per feature, each a thin typed wrapper around `request()` — every
- * request still carries a bearer token once authenticated
- * (docs/04-Architecture/57) and every write carries an idempotency key
- * (docs/04-Architecture/56 §3).
+ * idempotency + correlation keys, and error envelopes. Domain-specific calls
+ * live in sibling files (`auth.ts`, `family.ts`, ...), one per feature.
+ *
+ * GAS-compatible, preflight-free transport (docs/04-Architecture/53 §4):
+ * the frontend is a static site (GitHub Pages) and the backend is a Google
+ * Apps Script Web App on a DIFFERENT origin, so every call is cross-origin.
+ * Apps Script cannot answer a CORS preflight (it has no `doOptions` and cannot
+ * set response headers), so this client sends ONLY CORS-safelisted request
+ * headers and never triggers one. All request plumbing the backend needs —
+ * bearer `token`, `idempotencyKey`, `correlationId` — travels as query params,
+ * which are exactly what GAS `doGet`/`doPost` expose to `toApiRequest`
+ * (apps/backend/src/main.ts); a custom header would be invisible to GAS anyway.
+ * The JSON request body is sent with a `text/plain` content type (also
+ * safelisted); the backend parses it with `JSON.parse` regardless of type.
  */
 
 import { API_VERSION } from '@wise-bloom/api-contract';
@@ -41,12 +49,30 @@ export interface RequestInitLite {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   query?: Record<string, string | undefined>;
+  /** Overrides the generated idempotency key for a write (docs/04-Architecture/56 §3). */
   idempotencyKey?: string;
+  /** Overrides the generated correlation id for a request (docs/04-Architecture/63). */
+  correlationId?: string;
 }
 
-function newIdempotencyKey(): string {
+function randomId(): string {
   const c = globalThis.crypto as { randomUUID?: () => string } | undefined;
   return c?.randomUUID ? c.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+/**
+ * A well-formed coded error envelope (docs/04-Architecture/56 §8). Apps Script
+ * Web Apps always return HTTP 200 (ContentService cannot set a status code), so
+ * a backend error is conveyed only by this shape in the body — never by the HTTP
+ * status. No success payload in this API has a top-level `error.code`.
+ */
+function isErrorEnvelope(value: unknown): value is ApiErrorEnvelope {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'error' in value &&
+    typeof (value as { error?: { code?: unknown } }).error?.code === 'string'
+  );
 }
 
 export class ApiClient {
@@ -69,24 +95,28 @@ export class ApiClient {
       }
     }
 
-    const headers: Record<string, string> = { Accept: 'application/json' };
+    // Bearer token as a query param — the mechanism GAS actually reads
+    // (apps/backend/src/main.ts). Sending it as an Authorization header would be
+    // invisible to GAS AND would trigger a CORS preflight it cannot answer.
     if (this.token) {
-      // Google Apps Script Web Apps (doGet/doPost) cannot read custom request
-      // headers - only query/form params reach the entry point
-      // (docs/04-Architecture/53 section 4). The bearer token is therefore sent
-      // as a `token` query param, the mechanism the backend actually reads
-      // (apps/backend/src/main.ts). The Authorization header is kept too: it is
-      // harmless to GAS and lets a future non-GAS backend read the bearer token
-      // the standard way (docs/04-Architecture/57).
       url.searchParams.set('token', this.token);
-      headers['Authorization'] = `Bearer ${this.token}`;
     }
-    if (init.body !== undefined) {
-      headers['Content-Type'] = 'application/json';
-    }
-    // Every write carries an idempotency key, whether or not it has a body (docs/04-Architecture/56 §3).
+    // Correlation id on every request, for log correlation (docs/04-Architecture/63).
+    url.searchParams.set('correlationId', init.correlationId ?? randomId());
+    // Idempotency key on every write, whether or not it has a body
+    // (docs/04-Architecture/56 §3). A query param (not a header) is what the GAS
+    // entry point reads, so this is what actually preserves idempotency on GAS.
     if (init.method !== 'GET') {
-      headers['Idempotency-Key'] = init.idempotencyKey ?? newIdempotencyKey();
+      url.searchParams.set('idempotencyKey', init.idempotencyKey ?? randomId());
+    }
+
+    // Only CORS-safelisted request headers, so a cross-origin call never triggers
+    // a preflight OPTIONS. `Accept` is always safelisted; `text/plain` is one of
+    // the three safelisted `Content-Type` values (the backend JSON-parses the body
+    // regardless of the declared type). No Authorization / Idempotency-Key header.
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (init.body !== undefined) {
+      headers['Content-Type'] = 'text/plain;charset=UTF-8';
     }
 
     const response = await this.fetchImpl(url.toString(), {
@@ -96,7 +126,10 @@ export class ApiClient {
     });
 
     const payload: unknown = await response.json().catch(() => ({}));
-    if (!response.ok) {
+    // A non-2xx status (non-GAS backend) OR a coded error envelope in the body
+    // (Apps Script, which is always HTTP 200) both signal a failure. The envelope
+    // carries the real error code even when the HTTP status cannot.
+    if (!response.ok || isErrorEnvelope(payload)) {
       throw new ApiRequestError(response.status, payload as ApiErrorEnvelope);
     }
     return payload as T;

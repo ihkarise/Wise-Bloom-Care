@@ -49,13 +49,119 @@ jobs:
             echo "SKIP_GAS=1" >> "$GITHUB_ENV"
           fi
 
+      # Structure-only diagnostic for the clasp credential file. Prints ONLY the
+      # shape of CLASPRC_JSON (presence, JSON validity, key NAMES, and whether it
+      # matches a known clasp credential layout) — never any secret value. Also
+      # writes the file exactly as "Configure clasp" does, to catch shell-quoting
+      # corruption. Temporary and self-cleaning.
+      - name: Diagnose CLASPRC_JSON (structure only, no secret values)
+        if: ${{ env.SKIP_GAS != '1' }}
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          printf '%s' '${{ secrets.CLASPRC_JSON }}' > "$HOME/.clasprc.diag.json"
+          node -e '
+            const fs = require("fs");
+            const os = require("os");
+            const fromEnv = process.env.CLASPRC_JSON || "";
+            const diagPath = os.homedir() + "/.clasprc.diag.json";
+            const fromFile = fs.existsSync(diagPath) ? fs.readFileSync(diagPath, "utf8") : "";
+            const report = (label, raw) => {
+              console.log("== " + label + " ==");
+              console.log("present:", raw.length > 0);
+              console.log("length_bucket:", raw.length === 0 ? "empty" : (raw.length < 200 ? "small_<200" : "ok_>=200"));
+              let obj;
+              try { obj = JSON.parse(raw); } catch (e) { console.log("valid_json:", false, "(" + e.name + ")"); return; }
+              console.log("valid_json:", true);
+              const keys = obj && typeof obj === "object" ? Object.keys(obj) : [];
+              console.log("top_level_keys:", JSON.stringify(keys));
+              const has = (k) => keys.includes(k);
+              console.log("looks_like_clasprc_v2 (token+oauth2ClientSettings):", has("token") && has("oauth2ClientSettings"));
+              console.log("looks_like_clasprc_v3 (tokens):", has("tokens"));
+              console.log("looks_like_project_dot_clasp (scriptId/rootDir):", has("scriptId") || has("rootDir"));
+              const subkeys = (k) => (obj[k] && typeof obj[k] === "object") ? Object.keys(obj[k]) : null;
+              if (has("token")) console.log("token subkeys (names only):", JSON.stringify(subkeys("token")));
+              if (has("tokens")) console.log("tokens subkeys (names only):", JSON.stringify(subkeys("tokens")));
+              if (has("oauth2ClientSettings")) console.log("oauth2ClientSettings subkeys (names only):", JSON.stringify(subkeys("oauth2ClientSettings")));
+            };
+            report("from_secret_env", fromEnv);
+            report("from_written_file", fromFile);
+            console.log("env_equals_written_file:", fromEnv === fromFile);
+          '
+          rm -f "$HOME/.clasprc.diag.json"
+
       - name: Configure clasp for dev
         if: ${{ env.SKIP_GAS != '1' }}
         run: |
           printf '%s' '${{ secrets.CLASPRC_JSON }}' > "$HOME/.clasprc.json"
           printf '{"scriptId":"%s","rootDir":"src"}' '${{ secrets.DEV_SCRIPT_ID }}' > apps/backend/.clasp.json
 
+      # clasp is pinned for reproducibility. v3.x reads the current
+      # `~/.clasprc.json` credential shape ({"tokens":{"default":{…}}}) that
+      # `clasp login` now writes; the older 2.4.2 pin expected the legacy
+      # {"token":…,"oauth2ClientSettings":…} shape and failed with
+      # "Cannot read properties of undefined (reading 'access_token')". v3 reads
+      # $HOME/.clasprc.json by default and accepts the same .clasp.json
+      # (scriptId/rootDir) and `push --force`.
       - name: Push backend to dev Apps Script
         if: ${{ env.SKIP_GAS != '1' }}
         working-directory: apps/backend
-        run: npx --yes @google/clasp@2.4.2 push --force
+        run: npx --yes @google/clasp@3.4.1 push --force
+
+      # `push` updates HEAD, but a Web App /exec URL serves a pinned deployment
+      # version, so the pushed code is not automatically live there. List the
+      # project's deployments (JSON) and update each non-HEAD deployment to a new
+      # version cut from HEAD, so the existing /exec URL serves the current code.
+      # Best-effort: the required gate is the push above, so a refresh hiccup is a
+      # warning, not a run failure. Deployment ids are public (they appear in the
+      # /exec URL).
+      - name: List + refresh dev Web App deployments
+        if: ${{ env.SKIP_GAS != '1' }}
+        working-directory: apps/backend
+        run: |
+          echo '== Existing deployments (JSON) =='
+          npx --yes @google/clasp@3.4.1 deployments --json | tee /tmp/deps.json || true
+          DESC="sprint-02 dev $(git rev-parse --short HEAD)"
+          node -e '
+            const fs = require("fs");
+            let raw = "";
+            try { raw = fs.readFileSync("/tmp/deps.json", "utf8"); } catch { process.exit(0); }
+            let data;
+            try { data = JSON.parse(raw); } catch { console.log("deployments output was not JSON; see log above"); process.exit(0); }
+            const list = Array.isArray(data) ? data : (data.deployments || data.results || []);
+            const ids = [];
+            for (const d of list) {
+              const id = d.deploymentId || d.id;
+              const entry = d.deploymentConfig || d;
+              const versionNumber = entry.versionNumber ?? d.versionNumber;
+              // A HEAD deployment has no versionNumber; it already tracks HEAD.
+              if (id && versionNumber !== undefined && versionNumber !== null) ids.push(id);
+            }
+            fs.writeFileSync("/tmp/dep-ids.txt", ids.join("\n"));
+            console.log("Non-HEAD deployment ids to refresh:", ids.length);
+          '
+          if [ -s /tmp/dep-ids.txt ]; then
+            while read -r DEP_ID; do
+              [ -n "$DEP_ID" ] || continue
+              echo "Refreshing deployment ${DEP_ID} -> new version from HEAD…"
+              npx --yes @google/clasp@3.4.1 deploy -i "$DEP_ID" -d "$DESC" \
+                || echo "::warning::Could not refresh deployment ${DEP_ID}"
+            done < /tmp/dep-ids.txt
+          else
+            echo "No versioned Web App deployment in this project yet — creating one from HEAD…"
+            npx --yes @google/clasp@3.4.1 deploy -d "$DESC" || echo "::warning::create-deployment failed"
+          fi
+          echo '== Deployments after refresh/create (the /exec URL uses the non-HEAD deploymentId) =='
+          npx --yes @google/clasp@3.4.1 deployments --json | node -e '
+            const fs=require("fs"); let raw=""; process.stdin.on("data",d=>raw+=d).on("end",()=>{
+              let data; try{data=JSON.parse(raw)}catch{console.log(raw);return;}
+              const list=Array.isArray(data)?data:(data.deployments||[]);
+              for(const d of list){
+                const id=d.deploymentId||d.id;
+                const v=(d.deploymentConfig||d).versionNumber ?? d.versionNumber;
+                const kind = (v===undefined||v===null) ? "HEAD" : ("v"+v);
+                console.log(kind+"  deploymentId="+id);
+                if(v!==undefined && v!==null) console.log("  EXEC_URL=https://script.google.com/macros/s/"+id+"/exec");
+              }
+            });
+          ' || true

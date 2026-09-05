@@ -1,0 +1,51 @@
+name: E2E (staging smoke)
+
+# Real browser end-to-end against the deployed staging system
+# (GitHub Pages -> Apps Script /exec -> Google Sheet). Runs on a GitHub runner,
+# which can reach github.io and script.google.com. Synthetic data only; no
+# mocks, no localhost. Triggered manually, and automatically after a successful
+# Pages deploy.
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Deploy Pages (frontend)']
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: playwright smoke (deployed)
+    # Manual dispatch, or only after a *successful* Pages deploy.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install Playwright + Chromium
+        working-directory: e2e
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Run Sprint 02 staging smoke test
+        working-directory: e2e
+        env:
+          E2E_BASE_URL: 'https://ihkarise.github.io/Wise-Bloom-Care'
+          # The dev Web App /exec in the DEV_SCRIPT_ID project (ANYONE_ANONYMOUS).
+          E2E_API_URL: 'https://script.google.com/macros/s/AKfycbxGTss7Hpkul4y299TGsTxQj2F26k2DhbHOp9TdvzrLwZJ9b183b5HOUtq6Iu700Cpx/exec'
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          if-no-files-found: ignore

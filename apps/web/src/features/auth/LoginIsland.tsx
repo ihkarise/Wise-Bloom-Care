@@ -10,6 +10,7 @@ import { useId, useState, type FormEvent, type ReactElement } from 'react';
 import { login } from '../../api/auth';
 import { ApiClient } from '../../api/client';
 import { friendlyErrorMessage } from '../../lib/errors';
+import { withBase } from '../../lib/paths';
 import { useSession } from '../../state/session';
 
 export interface LoginIslandProps {
@@ -35,7 +36,7 @@ export default function LoginIsland({ apiBaseUrl }: LoginIslandProps): ReactElem
       const client = new ApiClient({ baseUrl: apiBaseUrl });
       const result = await login(client, { email, password });
       setStored({ user: result.user, session: result.session });
-      window.location.assign('/app');
+      window.location.assign(withBase('/app'));
     } catch (caught) {
       setError(friendlyErrorMessage(caught));
     } finally {
@@ -104,7 +105,7 @@ export default function LoginIsland({ apiBaseUrl }: LoginIslandProps): ReactElem
 
       <p className="text-small text-text-secondary">
         New here?{' '}
-        <a href="/register" className="text-link underline">
+        <a href={withBase('/register')} className="text-link underline">
           Create an account
         </a>
         .
