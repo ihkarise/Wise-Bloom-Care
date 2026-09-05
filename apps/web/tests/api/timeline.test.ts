@@ -26,7 +26,7 @@ describe('timeline api', () => {
     const result = await getTimeline(client);
     expect(result.items).toEqual([]);
     const [url] = fetchImpl.mock.calls[0] as unknown as [string];
-    expect(url).toContain('/v1/timeline');
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/timeline');
   });
 
   it('passes the cursor through for pagination', async () => {

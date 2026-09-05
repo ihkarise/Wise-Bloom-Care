@@ -6,10 +6,11 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit",
+    "build:gas": "node scripts/build-gas.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "deploy:dev": "npx --yes @google/clasp@2.4.2 push"
+    "deploy:dev": "pnpm run build:gas && npx --yes @google/clasp@3.4.1 push --force"
   },
   "dependencies": {
     "@wise-bloom/api-contract": "workspace:*",
@@ -18,6 +19,7 @@
   "devDependencies": {
     "@types/google-apps-script": "^1.0.99",
     "@types/node": "^22.10.2",
+    "esbuild": "0.28.1",
     "eslint": "^9.17.0",
     "jiti": "^2.4.2",
     "typescript": "^5.7.2",

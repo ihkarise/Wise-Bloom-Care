@@ -13,10 +13,12 @@
  * Apps Script Web App on a DIFFERENT origin, so every call is cross-origin.
  * Apps Script cannot answer a CORS preflight (it has no `doOptions` and cannot
  * set response headers), so this client sends ONLY CORS-safelisted request
- * headers and never triggers one. All request plumbing the backend needs —
- * bearer `token`, `idempotencyKey`, `correlationId` — travels as query params,
- * which are exactly what GAS `doGet`/`doPost` expose to `toApiRequest`
- * (apps/backend/src/main.ts); a custom header would be invisible to GAS anyway.
+ * headers and never triggers one. All request plumbing the backend needs — the
+ * versioned route `path`, bearer `token`, `idempotencyKey`, `correlationId` —
+ * travels as query params, which are exactly what GAS `doGet`/`doPost` expose to
+ * `toApiRequest` (apps/backend/src/main.ts). The URL sub-path after `/exec` is
+ * `pathInfo`, which the backend never reads, so the route CANNOT live in the
+ * pathname; and a custom header would be invisible to GAS anyway.
  * The JSON request body is sent with a `text/plain` content type (also
  * safelisted); the backend parses it with `JSON.parse` regardless of type.
  */
@@ -88,13 +90,21 @@ export class ApiClient {
 
   /** Issues one request against `/v1{path}`. Public so per-feature modules under `api/` can build on it. */
   async request<T>(path: string, init: RequestInitLite): Promise<T> {
-    const url = new URL(`${this.baseUrl}/${API_VERSION}${path}`);
+    // The base URL is the bare Apps Script `/exec` endpoint; the route never
+    // goes in the pathname (that becomes GAS `pathInfo`, which the backend
+    // ignores). Domain query params are set first so a reserved plumbing param
+    // below can never be shadowed by one.
+    const url = new URL(this.baseUrl);
     for (const [key, value] of Object.entries(init.query ?? {})) {
       if (value !== undefined) {
         url.searchParams.set(key, value);
       }
     }
 
+    // Versioned route as the `path` query param — the only place GAS
+    // doGet/doPost surface it (apps/backend/src/main.ts reads
+    // `event.parameter['path']`, and the router keys on `/v1/...`).
+    url.searchParams.set('path', `/${API_VERSION}${path}`);
     // Bearer token as a query param — the mechanism GAS actually reads
     // (apps/backend/src/main.ts). Sending it as an Authorization header would be
     // invisible to GAS AND would trigger a CORS preflight it cannot answer.

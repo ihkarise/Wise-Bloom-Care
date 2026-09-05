@@ -41,6 +41,6 @@ describe('maternal api', () => {
     const result = await listPregnancyEpisodes(client(fetchImpl as unknown as typeof fetch));
     expect(result.items).toEqual([]);
     const [url] = fetchImpl.mock.calls[0] as unknown as [string];
-    expect(url).toContain('/v1/maternal/pregnancy-episodes');
+    expect(new URL(url).searchParams.get('path')).toBe('/v1/maternal/pregnancy-episodes');
   });
 });

@@ -35,6 +35,14 @@ jobs:
       - name: Build frontend
         run: pnpm --filter @wise-bloom/web build
 
+      # Bundle the modular ES-module backend into a single GAS-deployable file
+      # with GLOBAL doGet/doPost (docs/04-Architecture/53 §4). Apps Script has no
+      # module system and clasp does not bundle, so raw `src/*.ts` cannot deploy —
+      # a previous push sent only appsscript.json and the Web App failed with
+      # "Script function not found: doGet". This emits apps/backend/gas-dist/.
+      - name: Build backend (GAS bundle)
+        run: pnpm --filter @wise-bloom/backend build:gas
+
       - name: Upload frontend artifact
         uses: actions/upload-artifact@v4
         with:
@@ -90,11 +98,14 @@ jobs:
           '
           rm -f "$HOME/.clasprc.diag.json"
 
+      # rootDir is the GAS bundle output (gas-dist), NOT src: clasp v3 does not
+      # transpile/bundle TypeScript, so pushing src/ deployed only appsscript.json.
+      # gas-dist holds the single bundled main.js (global doGet/doPost) + manifest.
       - name: Configure clasp for dev
         if: ${{ env.SKIP_GAS != '1' }}
         run: |
           printf '%s' '${{ secrets.CLASPRC_JSON }}' > "$HOME/.clasprc.json"
-          printf '{"scriptId":"%s","rootDir":"src"}' '${{ secrets.DEV_SCRIPT_ID }}' > apps/backend/.clasp.json
+          printf '{"scriptId":"%s","rootDir":"gas-dist"}' '${{ secrets.DEV_SCRIPT_ID }}' > apps/backend/.clasp.json
 
       # clasp is pinned for reproducibility. v3.x reads the current
       # `~/.clasprc.json` credential shape ({"tokens":{"default":{…}}}) that
