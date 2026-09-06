@@ -26,15 +26,47 @@ const SYNTH = {
   password: 'Synthetic-Passw0rd!',
 };
 
-/** Wait for either the authenticated app shell or an inline error, and fail loudly with the error text. */
+/**
+ * Wait for either the authenticated app shell or an inline error, and fail
+ * loudly with the error text.
+ *
+ * The shell signal is the "Log out" control (always present once signed in);
+ * the app's islands hydrate `client:load`, so the vitals form is present for
+ * the checks that follow without any scroll gymnastics.
+ */
 async function expectAppOrError(page: Page, action: string): Promise<void> {
-  const appHeading = page.getByRole('heading', { name: 'Log a vital' });
+  const shell = page.getByRole('button', { name: /Log out/i });
   const alert = page.getByRole('alert').first();
-  await expect(appHeading.or(alert)).toBeVisible({ timeout: 90_000 });
+  try {
+    await expect(shell.or(alert)).toBeVisible({ timeout: 90_000 });
+  } catch {
+    // Neither the shell nor an inline error surfaced. Capture where the browser
+    // actually ended up (no secrets) so the failure is diagnosable from the job
+    // log rather than needing the trace artifact.
+    const url = page.url();
+    const loginHeadingCount = await page
+      .getByRole('heading', { name: 'Log in' })
+      .count()
+      .catch(() => -1);
+    const createBtn = await page
+      .getByRole('button', { name: /Create account|Creating your account/i })
+      .count()
+      .catch(() => -1);
+    const bodyStart = (await page.locator('body').innerText().catch(() => ''))
+      .slice(0, 500)
+      .replace(/\s+/g, ' ')
+      .trim();
+    throw new Error(
+      `${action}: neither the app shell (Log out) nor an alert after 90s. ` +
+        `url=${url} loginHeadingCount=${loginHeadingCount} createBtnCount=${createBtn} ` +
+        `bodyStart="${bodyStart}"`,
+    );
+  }
   if (await alert.isVisible().catch(() => false)) {
     throw new Error(`${action} failed with an inline error: "${(await alert.innerText()).trim()}"`);
   }
-  await expect(appHeading).toBeVisible();
+  await expect(shell).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Log a vital' })).toBeVisible({ timeout: 60_000 });
 }
 
 async function registerSynthetic(page: Page): Promise<void> {
