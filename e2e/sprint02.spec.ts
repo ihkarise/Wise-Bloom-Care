@@ -30,12 +30,9 @@ const SYNTH = {
  * Wait for either the authenticated app shell or an inline error, and fail
  * loudly with the error text.
  *
- * The shell signal is the "Log out" control — a `client:load` island always
- * present once signed in — NOT the "Log a vital" heading, which lives in a
- * `client:visible` island (VitalLogIsland) that hydrates only when scrolled
- * into view. After confirming the shell, scroll the deferred vitals/reports
- * islands into view so the checks that follow can see them without depending
- * on action-triggered hydration.
+ * The shell signal is the "Log out" control (always present once signed in);
+ * the app's islands hydrate `client:load`, so the vitals form is present for
+ * the checks that follow without any scroll gymnastics.
  */
 async function expectAppOrError(page: Page, action: string): Promise<void> {
   const shell = page.getByRole('button', { name: /Log out/i });
@@ -69,10 +66,7 @@ async function expectAppOrError(page: Page, action: string): Promise<void> {
     throw new Error(`${action} failed with an inline error: "${(await alert.innerText()).trim()}"`);
   }
   await expect(shell).toBeVisible();
-  // Hydrate the deferred (client:visible) vitals/reports islands.
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await expect(page.getByRole('heading', { name: 'Log a vital' })).toBeVisible({ timeout: 60_000 });
-  await page.evaluate(() => window.scrollTo(0, 0));
 }
 
 async function registerSynthetic(page: Page): Promise<void> {
