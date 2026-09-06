@@ -26,18 +26,27 @@ const SYNTH = {
   password: 'Synthetic-Passw0rd!',
 };
 
-/** Wait for either the authenticated app shell or an inline error, and fail loudly with the error text. */
+/**
+ * Wait for either the authenticated app shell or an inline error, and fail
+ * loudly with the error text.
+ *
+ * The shell signal is the "Log out" control — a `client:load` island always
+ * present once signed in — NOT the "Log a vital" heading, which lives in a
+ * `client:visible` island (VitalLogIsland) that hydrates only when scrolled
+ * into view. After confirming the shell, scroll the deferred vitals/reports
+ * islands into view so the checks that follow can see them without depending
+ * on action-triggered hydration.
+ */
 async function expectAppOrError(page: Page, action: string): Promise<void> {
-  const appHeading = page.getByRole('heading', { name: 'Log a vital' });
+  const shell = page.getByRole('button', { name: /Log out/i });
   const alert = page.getByRole('alert').first();
   try {
-    await expect(appHeading.or(alert)).toBeVisible({ timeout: 90_000 });
-  } catch (waitError) {
-    // Neither the app shell nor an inline error surfaced. Capture where the
-    // browser actually ended up (no secrets) so the failure is diagnosable
-    // from the job log rather than needing the trace artifact.
+    await expect(shell.or(alert)).toBeVisible({ timeout: 90_000 });
+  } catch {
+    // Neither the shell nor an inline error surfaced. Capture where the browser
+    // actually ended up (no secrets) so the failure is diagnosable from the job
+    // log rather than needing the trace artifact.
     const url = page.url();
-    const vitalTextCount = await page.getByText('Log a vital').count().catch(() => -1);
     const loginHeadingCount = await page
       .getByRole('heading', { name: 'Log in' })
       .count()
@@ -51,15 +60,19 @@ async function expectAppOrError(page: Page, action: string): Promise<void> {
       .replace(/\s+/g, ' ')
       .trim();
     throw new Error(
-      `${action}: neither app heading nor alert after 90s. ` +
-        `url=${url} vitalTextCount=${vitalTextCount} loginHeadingCount=${loginHeadingCount} ` +
-        `createBtnCount=${createBtn} bodyStart="${bodyStart}"`,
+      `${action}: neither the app shell (Log out) nor an alert after 90s. ` +
+        `url=${url} loginHeadingCount=${loginHeadingCount} createBtnCount=${createBtn} ` +
+        `bodyStart="${bodyStart}"`,
     );
   }
   if (await alert.isVisible().catch(() => false)) {
     throw new Error(`${action} failed with an inline error: "${(await alert.innerText()).trim()}"`);
   }
-  await expect(appHeading).toBeVisible();
+  await expect(shell).toBeVisible();
+  // Hydrate the deferred (client:visible) vitals/reports islands.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(page.getByRole('heading', { name: 'Log a vital' })).toBeVisible({ timeout: 60_000 });
+  await page.evaluate(() => window.scrollTo(0, 0));
 }
 
 async function registerSynthetic(page: Page): Promise<void> {
