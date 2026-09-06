@@ -41,7 +41,10 @@ jobs:
             || { echo "FAIL: expected an unauthenticated envelope — see body above"; exit 1; }
           echo
           echo "=== 2) Anonymous registration — real Sheet write (Script Properties + round-trip) ==="
-          REG_BODY=$(curl -sS -L -X POST \
+          # No -X POST: --data makes the first request a POST, and curl then
+          # follows GAS's 302 to the googleusercontent echo as a GET (forcing the
+          # method with -X would wrongly re-POST the echo and get an HTML page).
+          REG_BODY=$(curl -sS -L \
             -H "Content-Type: text/plain;charset=UTF-8" \
             --data "{\"email\":\"wb-smoke-$TS@example.com\",\"password\":\"Synthetic-Passw0rd!\",\"disclaimer_ack\":true,\"maternal_name\":\"Smoke Mother\"}" \
             "$API?path=%2Fv1%2Fauth%2Fregister&correlationId=smoke-$TS&idempotencyKey=smoke-$TS")
