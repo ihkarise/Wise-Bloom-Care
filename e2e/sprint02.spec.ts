@@ -30,7 +30,32 @@ const SYNTH = {
 async function expectAppOrError(page: Page, action: string): Promise<void> {
   const appHeading = page.getByRole('heading', { name: 'Log a vital' });
   const alert = page.getByRole('alert').first();
-  await expect(appHeading.or(alert)).toBeVisible({ timeout: 90_000 });
+  try {
+    await expect(appHeading.or(alert)).toBeVisible({ timeout: 90_000 });
+  } catch (waitError) {
+    // Neither the app shell nor an inline error surfaced. Capture where the
+    // browser actually ended up (no secrets) so the failure is diagnosable
+    // from the job log rather than needing the trace artifact.
+    const url = page.url();
+    const vitalTextCount = await page.getByText('Log a vital').count().catch(() => -1);
+    const loginHeadingCount = await page
+      .getByRole('heading', { name: 'Log in' })
+      .count()
+      .catch(() => -1);
+    const createBtn = await page
+      .getByRole('button', { name: /Create account|Creating your account/i })
+      .count()
+      .catch(() => -1);
+    const bodyStart = (await page.locator('body').innerText().catch(() => ''))
+      .slice(0, 500)
+      .replace(/\s+/g, ' ')
+      .trim();
+    throw new Error(
+      `${action}: neither app heading nor alert after 90s. ` +
+        `url=${url} vitalTextCount=${vitalTextCount} loginHeadingCount=${loginHeadingCount} ` +
+        `createBtnCount=${createBtn} bodyStart="${bodyStart}"`,
+    );
+  }
   if (await alert.isVisible().catch(() => false)) {
     throw new Error(`${action} failed with an inline error: "${(await alert.innerText()).trim()}"`);
   }
