@@ -23,6 +23,11 @@ apps/backend/.clasp.json
 coverage/
 *.log
 
+# Playwright (e2e) generated output — run locally / uploaded as a CI artifact
+e2e/playwright-report/
+e2e/test-results/
+e2e/package-lock.json
+
 # OS / editor
 .DS_Store
 Thumbs.db
