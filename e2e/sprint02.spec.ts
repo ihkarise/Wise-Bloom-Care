@@ -114,9 +114,17 @@ test('Sprint 02 staging smoke — 19 checks against the deployed system', async 
 }) => {
   test.setTimeout(600_000);
 
-  await test.step('1. site loads', async () => {
+  await test.step('1. site loads (landing offers a way in)', async () => {
     await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /One continuous record/i })).toBeVisible();
+    // The landing must give a first visitor an entry point, not a dead end:
+    // base-path-correct links to register and log in.
+    const registerCta = page.getByRole('link', { name: /Create your account/i });
+    const loginCta = page.getByRole('link', { name: /^Log in$/i });
+    await expect(registerCta).toBeVisible();
+    await expect(loginCta).toBeVisible();
+    await expect(registerCta).toHaveAttribute('href', /\/register$/);
+    await expect(loginCta).toHaveAttribute('href', /\/login$/);
   });
 
   await test.step('2. login route loads', async () => {
