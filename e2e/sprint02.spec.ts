@@ -8,7 +8,7 @@
  * `test.step`, so a failure names the exact step. The frontend base path
  * (/Wise-Bloom-Care/) and the Apps Script /exec URL come from the environment.
  */
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Locator, type Page } from '@playwright/test';
 
 const BASE = (process.env.E2E_BASE_URL ?? 'https://ihkarise.github.io/Wise-Bloom-Care').replace(
   /\/$/,
@@ -69,20 +69,46 @@ async function expectAppOrError(page: Page, action: string): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Log a vital' })).toBeVisible({ timeout: 60_000 });
 }
 
+/**
+ * Open an auth form and wait until its island can actually capture input.
+ *
+ * The register/login forms are Astro `client:load` React islands: their fields
+ * are controlled, and the value the form submits comes from React state that is
+ * populated by each field's onChange — not from the raw DOM value. Astro loads
+ * the island by a dynamic import, so filling a field before that import has run
+ * and hydrated sets the DOM value but NOT React state, and the submit then sends
+ * an empty field (the backend answers `validation_failed`). Waiting for network
+ * idle guarantees the island script has loaded and hydrated before we type. A
+ * human typing over several seconds never races this; only an instant
+ * programmatic fill does.
+ */
+async function gotoHydrated(page: Page, path: string): Promise<void> {
+  await page.goto(`${BASE}${path}`, { waitUntil: 'load' });
+  await page.waitForLoadState('networkidle');
+}
+
+/** Fill a hydrated field and confirm the value stuck before moving on. */
+async function fillField(field: Locator, value: string): Promise<void> {
+  await field.fill(value);
+  await expect(field).toHaveValue(value);
+}
+
 async function registerSynthetic(page: Page): Promise<void> {
-  await page.goto(`${BASE}/register`, { waitUntil: 'domcontentloaded' });
-  await page.getByLabel('Your name').fill(SYNTH.name);
-  await page.getByLabel('Email').fill(SYNTH.email);
-  await page.getByLabel('Password').fill(SYNTH.password);
-  await page.getByRole('checkbox').check();
+  await gotoHydrated(page, '/register');
+  await fillField(page.getByLabel('Your name'), SYNTH.name);
+  await fillField(page.getByLabel('Email'), SYNTH.email);
+  await fillField(page.getByLabel('Password'), SYNTH.password);
+  const ack = page.getByRole('checkbox');
+  await ack.check();
+  await expect(ack).toBeChecked();
   await page.getByRole('button', { name: /Create account/i }).click();
   await expectAppOrError(page, 'Registration');
 }
 
 async function loginSynthetic(page: Page): Promise<void> {
-  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
-  await page.getByLabel('Email').fill(SYNTH.email);
-  await page.getByLabel('Password').fill(SYNTH.password);
+  await gotoHydrated(page, '/login');
+  await fillField(page.getByLabel('Email'), SYNTH.email);
+  await fillField(page.getByLabel('Password'), SYNTH.password);
   await page.getByRole('button', { name: 'Log in' }).click();
   await expectAppOrError(page, 'Login');
 }
