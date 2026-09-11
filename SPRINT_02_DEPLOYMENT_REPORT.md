@@ -1,180 +1,197 @@
-# Sprint 02 — First Live Deployment Report
+# Sprint 02 — Live DEV Deployment Report
 
-**Date:** 2026-09-05
-**Scope:** Sprint 02 deployment + hardening only. Sprint 03 NOT started. Frozen
-architecture docs NOT modified. No tests weakened. No mocks substituted for the
-real end-to-end. No `no-cors`. Synthetic data only.
+**Date:** 2026-09-11
+**Scope:** Sprint 02 deployment verification + hardening only. Sprint 03 NOT
+started. Frozen architecture docs NOT modified. No tests weakened. No mocks
+substituted for the real end-to-end. No `no-cors`. Synthetic data only.
 
-**Overall verdict: NO-GO (blocked on one owner-side Apps Script setting).**
+**Overall verdict: GO — the live DEV deployment is usable end-to-end.**
 
-The frontend is live and correct, the backend code is deployed, and every
-in-scope code defect found has been fixed and verified. The one remaining
-blocker is **not a code problem**: the deployed Google Apps Script Web App is
-refusing anonymous browser access at Google's own auth layer (HTTP 403), which
-can only be changed by the project owner in the Apps Script UI. Steps to fix are
-in the checklist below.
-
----
-
-## 1. What is verified working
-
-| Area                              | Status | Evidence                                                                                                                                                              |
-| --------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sprint 02 merged to `main`        | ✅     | PR #17 merged; tag `v1.4.0-sprint-02` → `c504e4b`                                                                                                                     |
-| Frontend build (static Astro)     | ✅     | `pnpm -r build` → `apps/web/dist` "Complete!"; Chart.js bundle `auto.*.js` present (ADR‑003)                                                                          |
-| Frontend deployed to GitHub Pages | ✅     | `https://ihkarise.github.io/Wise-Bloom-Care/` — E2E steps 1–3 (home, `/login`, `/register`) load against the live site                                                |
-| Base path `/Wise-Bloom-Care/`     | ✅     | Static routes resolve under the project sub-path in E2E                                                                                                               |
-| Backend pushed to dev Apps Script | ✅     | `Deploy (dev)` run #10 (`33943841938`) — step "Push backend to dev Apps Script" succeeded; `src/appsscript.json` deployed                                             |
-| Dev Web App deployment minted     | ✅     | Same run: `Deployed AKfycbxGTss7…@2`; `EXEC_URL=https://script.google.com/macros/s/AKfycbxGTss7…/exec` (the exact URL the frontend + E2E use — no stale-URL mismatch) |
-| Local CI gate                     | ✅     | `lint` clean, `typecheck` clean, **227 tests pass** (web 50, backend 163, lint-rules 9, integration 5), build green                                                   |
+The previous edition of this report (2026-09-05) concluded **NO-GO**, blocked on
+an owner-side Apps Script anonymous-access setting (HTTP 403). That blocker has
+since been resolved: the deployed backend now serves anonymous browser calls,
+and a real-browser end-to-end run (GitHub Pages → Apps Script → Google Sheet)
+completed the **full** synthetic user journey today. Every fact below is tied to
+a named workflow run, commit, or local command output.
 
 ---
 
-## 2. Defect found and fixed (in-scope, code)
+## 1. Verified current state (evidence)
 
-### Client transport bug — API route was sent in the URL path, not where GAS reads it
-
-**Symptom:** The real Playwright E2E (GitHub Pages → Apps Script → Sheet) failed
-at **step 4 (registration)** with the calm fallback message
-_"Something went wrong on our end. Please try again in a moment."_
-
-**Root cause:** The API client built the route into the URL **pathname**
-(`${baseUrl}/v1${path}` → `…/exec/v1/auth/register`). Google Apps Script exposes
-only query/form params and the POST body to `doGet`/`doPost`; the sub-path after
-`/exec` is `pathInfo`, which the backend never reads (`apps/backend/src/main.ts`
-reads `event.parameter['path']`). Every real browser call therefore resolved to
-`POST /` on the backend and never reached the router.
-
-A direct runner probe confirmed this precisely: calling the old pathname URL
-returns **HTTP 401** with a Google HTML error page ("unable to open the file at
-this time"), which — having no `Access-Control-Allow-Origin` header — the browser
-cannot read, so `fetch` rejects and the UI shows the generic fallback.
-
-**Fix (`apps/web/src/api/client.ts`, commit `e32b619`):** send the versioned
-route as the `path` query param (`/v1{path}`) — the value GAS actually reads and
-the router keys on. Transport is otherwise unchanged and still preflight-free:
-only CORS-safelisted headers, all plumbing (`path`, `token`, `idempotencyKey`,
-`correlationId`) as query params, JSON body sent as `text/plain`. **No
-`no-cors`.**
-
-**Tests updated (not weakened):** the eight API-module transport tests now assert
-the route travels as the decoded `path` query param rather than a pathname
-substring. All 50 web tests pass.
-
-> This fix is committed and pushed on `claude/wise-bloom-deploy-sprint-02`. It is
-> **necessary but not sufficient**: even with the correct transport, the deployed
-> backend currently refuses anonymous access (see §3).
+| #   | Item                         | Value / status                                                                                                            | Evidence                                   |
+| --- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 1   | Working branch (this change) | `claude/elegant-babbage-kuqfbq`                                                                                           | `git branch --show-current`                |
+| 2   | Default branch HEAD          | `main` @ `6d8ed0e` (Merge PR #21)                                                                                         | `git log -1 origin/main`                   |
+| 3   | Sprint 02 tag                | `v1.4.0-sprint-02` (`git describe` → `v1.4.0-sprint-02-20-g6d8ed0e`)                                                      | `git tag`                                  |
+| 4   | Deploy workflow (frontend)   | `.github/workflows/deploy-pages.yml` — push to `main` (apps/web, packages) + manual                                       | run #4 `34027241893` **success**           |
+| 5   | Deploy workflow (backend)    | `.github/workflows/deploy-dev.yml` — manual dispatch, clasp push of the bundled GAS                                       | run #11 `33980627058` **success**          |
+| 6   | GitHub Pages config          | Project site, base `/Wise-Bloom-Care/` (astro.config `base`)                                                              | `deploy-pages` → `actions/deploy-pages@v4` |
+| 7   | **Live frontend URL**        | `https://ihkarise.github.io/Wise-Bloom-Care/`                                                                             | reached by E2E steps 1–3 today             |
+| 8   | Live backend `/exec`         | `https://script.google.com/macros/s/AKfycbxGTss7Hpkul4y299TGsTxQj2F26k2DhbHOp9TdvzrLwZJ9b183b5HOUtq6Iu700Cpx/exec`        | `deploy-pages.yml`, `e2e.yml`, run #10     |
+| 9   | `PUBLIC_API_BASE_URL`        | Baked at build time in `deploy-pages.yml` to the `/exec` above (public config, not a secret — docs/04-Architecture/60 §4) | workflow env                               |
+| 10  | Backend deploy status        | Bundled (esbuild → `gas-dist/main.js` exposing `doGet`/`doPost`), manifest `ANYONE_ANONYMOUS`, pushed to dev project      | run #11 @ `d097be1`                        |
+| 11  | Frontend deploy status       | Static Astro built + published to Pages; Chart.js in its own lazy `auto.*.js` chunk (~71 kB gzip)                         | `deploy-pages` run #4                      |
+| 12  | E2E status                   | **PASS** — see §3                                                                                                         | run #10 `34634690769` (2026-09-11)         |
+| 13  | Test count                   | **227** (web 50 · backend 163 · lint-rules 9 · cross-app 5)                                                               | `pnpm -r test` today, all green            |
 
 ---
 
-## 3. Remaining blocker (owner-side — NOT code)
+## 2. Deployment architecture
 
-### The deployed Web App refuses anonymous access (HTTP 403)
-
-A direct probe from a GitHub runner (which can reach `script.google.com`) called
-the **correct** GAS transport against the live `/exec`:
-
-| Probe | Request                                                     | Result                                                                                                     |
-| ----- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| A     | `GET  …/exec?path=/v1/timeline`                             | **HTTP 403** — Google access-denied HTML, no `Access-Control-Allow-Origin`, request never reached our code |
-| B     | `POST …/exec?path=/v1/auth/register` (text/plain JSON body) | **HTTP 403** — same Google HTML page                                                                       |
-| C     | `POST …/exec/v1/auth/register` (old pathname mechanism)     | **HTTP 401** — Google "unable to open the file" HTML page                                                  |
-
-A healthy anonymous deployment would instead return our JSON envelope (e.g.
-`{"error":{"code":"unauthenticated",…}}` for probe A). Getting a Google 403/401
-HTML page means the request is rejected **before** `doGet`/`doPost` runs — i.e.
-the Web App is not actually served anonymously.
-
-This is **not** a stale URL (the `/exec` is the freshly-minted v2 deployment from
-run #10) and **not** a manifest error — `apps/backend/src/appsscript.json`
-correctly declares:
-
-```json
-"webapp": { "executeAs": "USER_DEPLOYING", "access": "ANYONE_ANONYMOUS" }
+```
+Browser (any)
+  │  https://ihkarise.github.io/Wise-Bloom-Care/   (static Astro + React islands, GitHub Pages)
+  │      • base path /Wise-Bloom-Care/ (astro `base`; internal links via withBase)
+  │      • single API transport in apps/web/src/api/client.ts
+  ▼  cross-origin, preflight-free (CORS-safelisted headers only; route/token/ids as query params)
+Google Apps Script Web App  …/exec   (executeAs USER_DEPLOYING, access ANYONE_ANONYMOUS)
+  │      • doGet/doPost from the esbuild bundle (gas-dist/main.js)
+  │      • bearer-token auth + family-scope RBAC gate every request server-side
+  ▼
+Private Google Sheet (v1 storage, behind the swappable StorageAdapter) + private Drive refs
 ```
 
-Google is simply not honoring anonymous access for this deployment. That is
-controlled by the project owner in the Apps Script UI (and possibly by a Google
-account/Workspace policy), so it cannot be fixed from code or CI.
+The two frozen independence boundaries are intact: the client depends only on
+`@wise-bloom/api-contract`; only the `SheetsStorageAdapter` touches Sheets.
 
 ---
 
-## 4. Owner checklist to unblock (no coding required)
+## 3. Real end-to-end result (live, today)
 
-Do these in the **dev** Apps Script project (the one whose Script ID is stored in
-the `DEV_SCRIPT_ID` secret):
-
-1. **Open the project** at <https://script.google.com> → your Wise Bloom dev
-   project.
-2. **Deploy → Manage deployments.** Select the active deployment named
-   `sprint-02 dev …` (deployment id begins `AKfycbxGTss7…`).
-3. Click the **pencil (Edit)**. Set:
-   - **Execute as:** _Me (your email)_
-   - **Who has access:** _Anyone_ &nbsp;(the most open option — **not** "Anyone
-     with Google account", **not** "Only myself")
-   - Click **Deploy**.
-4. When Google prompts, **Authorize access** and **Allow** the requested
-   permissions (Google Sheets + external requests). This one-time consent is
-   required because the app executes as you.
-5. **Confirm Script Properties** (Project Settings ⚙ → _Script properties_):
-   - `SPREADSHEET_ID` = the Google Sheet's id
-   - `EMAIL_PEPPER` = a long random string
-   - _(optional)_ `ENVIRONMENT` = `dev`
-     The backend reads these at runtime; the current 403 hides whether they're set,
-     so please verify them while you're in there.
-6. **Verify anonymously:** open the `/exec` URL in a **private/incognito** window
-   (logged out). Success looks like **JSON text**, e.g.
-   `{"error":{"code":"not_found","message":"Unknown route"}}` for the bare URL —
-   **not** a Google sign-in or "unable to open the file" page.
-7. **Tell Claude it's done.** I will then: re-run `Deploy (dev)`, merge the
-   transport fix to `main` (redeploys Pages with the corrected client), and re-run
-   the real Playwright E2E (GitHub Pages → Apps Script → Sheet).
-
-> **If your account is Google Workspace (not consumer Gmail):** an admin policy
-> may block anonymous web apps entirely. If step 3 won't let you pick "Anyone",
-> that's the cause, and we'd need a decision on an alternative (e.g. a thin public
-> proxy in front of the Web App). Consumer Gmail accounts allow "Anyone".
+- **Harness:** `e2e/sprint02.spec.ts` — 19 `test.step` checks, real Chromium on a
+  GitHub Actions runner (which can reach `github.io` and `script.google.com`),
+  against the **deployed** system. No localhost, no mocks, synthetic data only.
+  Unchanged and not weakened.
+- **Run:** `E2E (staging smoke)` #10 — id `34634690769`, ref `main` @ `6d8ed0e`,
+  started 2026-09-11 18:41 UTC. **Job conclusion: success.**
+- **Coverage proven live:** site loads → login/register routes → **registration
+  (real Sheet write)** → login in a second browser context → authenticated app
+  shell → family/maternal record resolves → timeline empty state → dashboard
+  (server-aggregated) → **log a weight vital** → trend surfaces (62.5 kg) →
+  vital appears on timeline → **upload synthetic lab report** → report appears
+  on timeline → unauthenticated `/v1/timeline` refused (`unauthenticated`) →
+  media ref requires auth → logout clears session → log back in → session
+  persists across reload → direct `/app` without a session redirects to login.
+- **Reliability note (honest):** run #10 recorded **1 flaky** — attempt 1 failed
+  at step 4 (registration) with a _client-side_ `validation_failed` ("Please
+  check the highlighted fields"), then **passed in full on the configured
+  retry**. Root cause is a submit-before-hydrate timing race in the automated
+  test (Playwright fills the `client:load` form faster than it hydrates), not a
+  backend error and not something a human typing over several seconds hits. The
+  prior green run #9 (2026-09-06) passed on the **first** attempt with no retry.
+  Playwright is configured with `retries: 1` specifically for slow GAS
+  cold-starts. Tracked as a Sprint 03 test-hardening item (add an explicit
+  hydration wait); no product defect.
 
 ---
 
-## 5. Real E2E status
+## 4. Deployment-hardening PRs #18–#21 (all merged, none redundant)
 
-- **Harness:** `e2e/sprint02.spec.ts` — 19 `test.step` checks, real browser,
-  GitHub-runner only, against the deployed system. No mocks, no localhost,
-  synthetic data only. **Unchanged and not weakened.**
-- **Result:** run `33958088514` — steps 1–3 (static routes) **PASS**; step 4
-  (registration, first real backend call) **FAIL** — blocked by the §3 backend
-  403, not by the frontend.
-- Once §4 is done, the same E2E is expected to advance through registration →
-  login → vitals → reports → dashboard → privacy boundaries → logout.
+| PR  | What it fixed                                                                                                  | State                      |
+| --- | -------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| #18 | GAS-safe transport, base-path, Pages + E2E workflows, web-app config                                           | Merged → `main` 2026-09-05 |
+| #19 | clasp 3.4.1 pin, redeploy `/exec` to pushed code, manifest into `src/`, `ANYONE_ANONYMOUS`                     | Merged → `main` 2026-09-05 |
+| #20 | esbuild bundle of the GAS backend so `doGet`/`doPost` actually deploy; client route sent as `path` query param | Merged → `main` 2026-09-06 |
+| #21 | eager-hydrate (`client:load`) the vitals + reports islands so the `/app` core flow works                       | Merged → `main` 2026-09-06 |
 
----
-
-## 6. Guardrails honored
-
-- **Sprint 03:** NOT started. No Sprint 03 files, branches, or scaffolding.
-- **Frozen architecture docs:** NOT modified.
-- **Tests:** none weakened, skipped, or deleted; transport tests strengthened to
-  assert the real GAS contract. 227 tests pass.
-- **Real E2E:** kept real; never replaced with mocks.
-- **`no-cors`:** not used anywhere.
-- **Secrets:** never printed. The diagnostic probe used only the public `/exec`
-  URL and synthetic data, and has been removed from the workflow.
-- **No fabricated URLs / results / Sheet data:** every fact above is tied to a
-  named workflow run, commit, or local command output.
+No hardening work was duplicated in this pass. The merged fixes were **verified**
+by the fresh live E2E rather than rewritten.
 
 ---
 
-## 7. Final status
+## 5. Visual QA (deployed frontend)
 
-| Item                                   | Result                                                                                      |
-| -------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Backend (code push + deployment)       | Deployed, but **not anonymously reachable** — 403 (owner-side)                              |
-| Frontend                               | **PASS** — live at `https://ihkarise.github.io/Wise-Bloom-Care/`                            |
-| Real E2E (Pages → Apps Script → Sheet) | **FAIL at step 4** — blocked by backend 403                                                 |
-| 19-step smoke                          | **3 / 19** (static routes) — remainder blocked by backend 403                               |
-| Local CI gate                          | **PASS** — lint, typecheck, 227 tests, build                                                |
-| Secrets                                | Safe — no values exposed                                                                    |
-| Architecture frozen                    | **YES**                                                                                     |
-| Sprint 03 started                      | **NO**                                                                                      |
-| **Overall**                            | **NO-GO** — pending the §4 owner checklist (one Apps Script access setting + authorization) |
+Real screenshots were captured against a local build served under the true
+`/Wise-Bloom-Care/` base path (desktop 1280px and mobile 390px).
+
+**A — Deployment blockers (fixed this pass):**
+
+- **Landing page had no way in.** `/` rendered the Sprint 00 empty shell
+  (headline + dev "foundation shell" copy + a "Build baseline / Environment"
+  diagnostic card) with **no link to Register or Login** — a dead end for anyone
+  opening the front door. Fixed on `claude/elegant-babbage-kuqfbq` (commit
+  `920d56d`): primary **"Create your account" → /register** and secondary
+  **"Log in" → /login** CTAs (base-path-correct via `withBase`), product copy in
+  place of the dev-shell sentence, and a de-emphasized "Preview environment:
+  dev" note. The `One continuous record.` heading (relied on by E2E step 1) is
+  unchanged; the smoke test now also asserts both entry links. **Pending deploy
+  to `main`.**
+
+**B — Sprint 03 UX improvements (not done here):**
+
+- Hero vertical whitespace (content sits low under a tall empty band).
+- A richer, real landing beyond a single hero.
+- E2E registration flake → add an explicit hydration wait (test robustness).
+
+**C — Future design improvements (not done here):**
+
+- Full application chrome/navigation for the authenticated `/app` surfaces,
+  richer dashboard visuals, illustrations, marketing landing, brand polish.
+
+Login, register, and the `/app` unauthenticated redirect were all clean,
+functional, cross-linked, and responsive — no blockers there.
+
+---
+
+## 6. Security status
+
+- **Anonymous GAS endpoint is intentional and gated in-app.** Google-level access
+  is `ANYONE_ANONYMOUS` so the static browser app can call `/exec`; every request
+  is still gated by bearer-token auth + family-scope RBAC server-side
+  (docs/04-Architecture/53 §7). The live E2E proves an unauthenticated
+  `/v1/timeline` is refused (`unauthenticated`) and a media ref cannot be minted
+  without auth.
+- **No secrets in the repo.** `PUBLIC_API_BASE_URL` is public config; the media
+  signing key is derived at runtime from a Script Property; deploy creds live in
+  GitHub secrets only.
+- **Media privacy** (short-lived, HMAC-signed, backend-mediated refs; no public
+  link) and **audit logging** (metadata-only, no PHI) are unchanged from Sprint 02.
+- This pass changed one presentational island only; no auth, RBAC, storage, or
+  API-contract code was touched.
+
+---
+
+## 7. Remaining deployment work
+
+1. **Deploy the landing entry-point fix.** Merge `claude/elegant-babbage-kuqfbq`
+   into `main` → `deploy-pages` republishes Pages → the live front door gains the
+   Register/Login CTAs. (The journey already works today by going straight to
+   `…/Wise-Bloom-Care/register`.)
+2. **Optional test hardening.** Add a hydration wait to the registration/login
+   E2E helpers to remove the intermittent retry.
+
+Nothing else blocks manual use of the live DEV site.
+
+---
+
+## 8. Sprint 03 readiness
+
+Foundation (Sprint 00), identity/timeline (Sprint 01), and dashboard/vitals/
+reports (Sprint 02) are complete, merged, tagged (`v1.4.0-sprint-02`), and — as
+of today — **verified working on the live DEV deployment end-to-end**. The
+architecture remains frozen and unchanged. Sprint 03 has **not** been started and
+should begin only after manual sign-off on the live journey.
+
+---
+
+## 9. Definition of Done for this phase
+
+> "I can open the Wise Bloom Care website myself and successfully complete the
+> basic synthetic user journey against the real DEV backend."
+
+- **Live URL loads and serves the app:** ✅ (E2E steps 1–3, today).
+- **Full synthetic journey against the real DEV backend:** ✅ (E2E run #10, 19/19
+  checks on the successful attempt, today).
+- **Front-door navigation:** ✅ in code on the working branch; **awaiting deploy**
+  to `main` to reach the live site. Until then the journey is reachable via
+  `/register` and `/login` directly.
+
+---
+
+## 10. Guardrails honored
+
+- Sprint 03: NOT started. Delivery / baby / AI: NOT implemented.
+- Frozen architecture docs: NOT modified. Medical logic: unchanged.
+- Tests: none weakened, skipped, or deleted; smoke test coverage added. 227 pass.
+- Real E2E: kept real; never replaced with mocks; run live today.
+- `no-cors`: not used. Secrets: none exposed. No fabricated URLs or results.
