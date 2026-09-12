@@ -6,6 +6,7 @@
  * each checks its own session state and redirects to `/login` if none exists
  * (docs/04-Architecture/57).
  */
+import AppointmentIsland from '../features/appointments/AppointmentIsland';
 import LogoutButton from '../features/auth/LogoutButton';
 import DashboardIsland from '../features/dashboard/DashboardIsland';
 import PregnancySetupIsland from '../features/pregnancy/PregnancySetupIsland';
@@ -40,6 +41,7 @@ const base = apiBaseUrl();
       <DashboardIsland client:load apiBaseUrl={base} />
       <PregnancySetupIsland client:load apiBaseUrl={base} />
       <VitalLogIsland client:load apiBaseUrl={base} />
+      <AppointmentIsland client:load apiBaseUrl={base} />
       <ReportUploadIsland client:load apiBaseUrl={base} />
       <TimelineView client:load apiBaseUrl={base} />
     </main>

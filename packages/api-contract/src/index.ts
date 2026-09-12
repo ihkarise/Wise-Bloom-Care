@@ -183,6 +183,18 @@ export const ENDPOINTS = [
   { method: 'GET', path: '/v1/appointments', purpose: 'list appointments', write: false },
   {
     method: 'POST',
+    path: '/v1/appointments',
+    purpose: 'schedule or record an appointment',
+    write: true,
+  },
+  {
+    method: 'POST',
+    path: '/v1/appointments/status',
+    purpose: 'update an appointment’s status (record a visit outcome)',
+    write: true,
+  },
+  {
+    method: 'POST',
     path: '/v1/delivery',
     purpose: 'record delivery; creates linked child(ren); idempotent; sole creator',
     write: true,
@@ -318,6 +330,42 @@ export interface DashboardResponse {
 
 /** `GET /v1/appointments` → list. */
 export type AppointmentListResponse = Paginated<Appointment>;
+
+/**
+ * `POST /v1/appointments` request — schedule (or record) a pregnancy visit.
+ * `scheduled_at` may be in the future (that is the point of scheduling).
+ * `status` is optional and defaults to `scheduled`; a past visit can be
+ * recorded directly as `completed` (docs/06-Modules/95, docs/08-Timeline/110).
+ */
+export interface ScheduleAppointmentRequest {
+  subject_id: Appointment['subject_id'];
+  scheduled_at: Appointment['scheduled_at'];
+  status?: Appointment['status'];
+}
+
+/**
+ * `POST /v1/appointments` → the stored appointment plus the `appointment`
+ * timeline event it created, keeping the visit on the one continuous record.
+ */
+export interface ScheduleAppointmentResponse {
+  event: Event;
+  appointment: Appointment;
+}
+
+/**
+ * `POST /v1/appointments/status` request — record a visit's outcome by moving
+ * its status. Modelled as a POST because the Apps Script transport exposes only
+ * GET and POST (docs/04-Architecture/53 §4); there is no PATCH on GAS.
+ */
+export interface UpdateAppointmentStatusRequest {
+  appt_id: Appointment['appt_id'];
+  status: Appointment['status'];
+}
+
+/** `POST /v1/appointments/status` → the updated appointment. */
+export interface UpdateAppointmentStatusResponse {
+  appointment: Appointment;
+}
 
 /** `GET /v1/growth?child=` → WHO growth series. */
 export type GrowthSeriesResponse = Paginated<GrowthMeasurement>;
