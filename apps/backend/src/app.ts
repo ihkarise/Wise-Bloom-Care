@@ -6,6 +6,7 @@
  * `StorageAdapter` (real Sheets vs. in-memory) is injected.
  */
 
+import { createAppointmentsController } from './controllers/appointmentsController';
 import { createAuthController } from './controllers/authController';
 import { createDashboardController } from './controllers/dashboardController';
 import { createFamilyController } from './controllers/familyController';
@@ -23,6 +24,7 @@ import {
 import { bytesToHex, hmacSha256, utf8ToBytes } from './lib/crypto';
 import { MediaService } from './lib/media';
 import { createInMemoryRateLimiter } from './lib/rateLimiter';
+import { AppointmentsService } from './services/AppointmentsService';
 import { AuditService } from './services/AuditService';
 import { AuthService } from './services/AuthService';
 import { ContentService } from './services/ContentService';
@@ -65,6 +67,7 @@ export interface App {
     content: ContentService;
     trend: TrendService;
     vitals: VitalsService;
+    appointments: AppointmentsService;
     reports: ReportsService;
     dashboard: DashboardService;
   };
@@ -83,6 +86,7 @@ export function buildApp(config: AppConfig): App {
   const content = new ContentService(storage);
   const trend = new TrendService();
   const vitals = new VitalsService(storage, timeline, trend);
+  const appointments = new AppointmentsService(storage, timeline);
 
   // Media signing key is derived from the email pepper (Script Property, docs/09-Security/124)
   // so no new required deployment secret is introduced; refs stay short-lived + backend-mediated (58).
@@ -124,6 +128,7 @@ export function buildApp(config: AppConfig): App {
     ...createMaternalController({ family, maternal, pregnancy, audit }),
     ...createTimelineController({ family, timeline, audit }),
     ...createVitalsController({ family, maternal, vitals, audit }),
+    ...createAppointmentsController({ family, maternal, appointments, audit }),
     ...createReportsController({ family, maternal, reports, audit }),
     ...createDashboardController({ family, dashboard, audit }),
   };
@@ -148,6 +153,7 @@ export function buildApp(config: AppConfig): App {
       content,
       trend,
       vitals,
+      appointments,
       reports,
       dashboard,
     },

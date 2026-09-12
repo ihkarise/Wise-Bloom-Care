@@ -183,6 +183,18 @@ export const ENDPOINTS = [
   { method: 'GET', path: '/v1/appointments', purpose: 'list appointments', write: false },
   {
     method: 'POST',
+    path: '/v1/appointments',
+    purpose: 'schedule or record a visit; appends an appointment timeline event',
+    write: true,
+  },
+  {
+    method: 'PATCH',
+    path: '/v1/appointments',
+    purpose: 'update an appointment’s status (completed/cancelled/missed)',
+    write: true,
+  },
+  {
+    method: 'POST',
     path: '/v1/delivery',
     purpose: 'record delivery; creates linked child(ren); idempotent; sole creator',
     write: true,
@@ -318,6 +330,35 @@ export interface DashboardResponse {
 
 /** `GET /v1/appointments` → list. */
 export type AppointmentListResponse = Paginated<Appointment>;
+
+/**
+ * `POST /v1/appointments` request. Schedules (future) or records (past) a
+ * visit. Unlike vitals, `scheduled_at` may be in the future — an appointment
+ * is a plan (docs/04-Architecture/54 §appointments). `status` defaults to
+ * `scheduled` server-side when omitted.
+ */
+export interface CreateAppointmentRequest {
+  subject_id: Appointment['subject_id'];
+  scheduled_at: Appointment['scheduled_at'];
+  status?: Appointment['status'];
+}
+
+/** `POST /v1/appointments` → the created appointment plus its timeline event. */
+export interface CreateAppointmentResponse {
+  event: Event;
+  appointment: Appointment;
+}
+
+/** `PATCH /v1/appointments` request — mark an existing appointment completed/cancelled/missed. */
+export interface UpdateAppointmentRequest {
+  appt_id: Appointment['appt_id'];
+  status: Appointment['status'];
+}
+
+/** `PATCH /v1/appointments` → the updated appointment. */
+export interface UpdateAppointmentResponse {
+  appointment: Appointment;
+}
 
 /** `GET /v1/growth?child=` → WHO growth series. */
 export type GrowthSeriesResponse = Paginated<GrowthMeasurement>;

@@ -14,6 +14,7 @@
  * stay inline below until their sprint gives them a dedicated file.
  */
 
+import { APPOINTMENT_TABLE } from './appointments';
 import { AUDIT_RECORD_TABLE } from './audit';
 import { EVENT_TABLE } from './events';
 import { FAMILY_TABLE } from './families';
@@ -127,21 +128,7 @@ export const TABLES: Record<EntityName, TableMapping> = {
     ],
     foreignKeys: [],
   },
-  Appointment: {
-    entity: 'Appointment',
-    tab: 'appointments',
-    pk: 'appt_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [
-      f('appt_id', 'string'),
-      f('family_id', 'string'),
-      f('subject_id', 'string'),
-      f('scheduled_at', 'datetime'),
-      f('status', 'string'),
-    ],
-    foreignKeys: [{ field: 'family_id', references: 'Family' }],
-  },
+  Appointment: APPOINTMENT_TABLE,
   Medicine: {
     entity: 'Medicine',
     tab: 'medicines',
