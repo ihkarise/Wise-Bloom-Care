@@ -6,6 +6,7 @@
  * `StorageAdapter` (real Sheets vs. in-memory) is injected.
  */
 
+import { createAppointmentsController } from './controllers/appointmentsController';
 import { createAuthController } from './controllers/authController';
 import { createDashboardController } from './controllers/dashboardController';
 import { createFamilyController } from './controllers/familyController';
@@ -23,6 +24,7 @@ import {
 import { bytesToHex, hmacSha256, utf8ToBytes } from './lib/crypto';
 import { MediaService } from './lib/media';
 import { createInMemoryRateLimiter } from './lib/rateLimiter';
+import { AppointmentsService } from './services/AppointmentsService';
 import { AuditService } from './services/AuditService';
 import { AuthService } from './services/AuthService';
 import { ContentService } from './services/ContentService';
@@ -66,6 +68,7 @@ export interface App {
     trend: TrendService;
     vitals: VitalsService;
     reports: ReportsService;
+    appointments: AppointmentsService;
     dashboard: DashboardService;
   };
 }
@@ -90,6 +93,7 @@ export function buildApp(config: AppConfig): App {
     hmacSha256(utf8ToBytes(emailPepper), utf8ToBytes('media-signing')),
   );
   const reports = new ReportsService(storage, timeline, new MediaService(mediaSigningSecret));
+  const appointments = new AppointmentsService(storage, timeline);
   const dashboard = new DashboardService({ storage, timeline, trend, maternal, pregnancy });
   const auth = new AuthService({
     storage,
@@ -125,6 +129,7 @@ export function buildApp(config: AppConfig): App {
     ...createTimelineController({ family, timeline, audit }),
     ...createVitalsController({ family, maternal, vitals, audit }),
     ...createReportsController({ family, maternal, reports, audit }),
+    ...createAppointmentsController({ family, maternal, appointments, audit }),
     ...createDashboardController({ family, dashboard, audit }),
   };
 
@@ -149,6 +154,7 @@ export function buildApp(config: AppConfig): App {
       trend,
       vitals,
       reports,
+      appointments,
       dashboard,
     },
   };

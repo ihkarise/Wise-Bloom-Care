@@ -10,10 +10,12 @@
  * Shipped-module entities each have their own file, one responsibility per
  * module: Sprint 01's users, sessions, families, maternal, pregnancyEpisodes,
  * events, audit (docs/20-Implementation/206 §4); Sprint 02's vitals and reports
- * (docs/20-Implementation/207 §4). Entities not yet owned by a shipped module
+ * (docs/20-Implementation/207 §4); Sprint 03's appointments
+ * (docs/20-Implementation/208 §4). Entities not yet owned by a shipped module
  * stay inline below until their sprint gives them a dedicated file.
  */
 
+import { APPOINTMENT_TABLE } from './appointments';
 import { AUDIT_RECORD_TABLE } from './audit';
 import { EVENT_TABLE } from './events';
 import { FAMILY_TABLE } from './families';
@@ -127,21 +129,7 @@ export const TABLES: Record<EntityName, TableMapping> = {
     ],
     foreignKeys: [],
   },
-  Appointment: {
-    entity: 'Appointment',
-    tab: 'appointments',
-    pk: 'appt_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [
-      f('appt_id', 'string'),
-      f('family_id', 'string'),
-      f('subject_id', 'string'),
-      f('scheduled_at', 'datetime'),
-      f('status', 'string'),
-    ],
-    foreignKeys: [{ field: 'family_id', references: 'Family' }],
-  },
+  Appointment: APPOINTMENT_TABLE,
   Medicine: {
     entity: 'Medicine',
     tab: 'medicines',
