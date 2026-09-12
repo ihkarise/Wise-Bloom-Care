@@ -15,29 +15,29 @@ Every fact below is tied to a named workflow run, commit, or command output.
 
 ## 1. Sprint 02 status
 
-| Area                                   | Status                                                          |
-| -------------------------------------- | --------------------------------------------------------------- |
-| Sprint 00 Foundation                   | COMPLETE                                                        |
-| Sprint 01 Identity & Timeline          | COMPLETE                                                        |
-| Sprint 02 Dashboard + Vitals + Reports | COMPLETE                                                        |
-| Sprint 02 backend                      | LIVE in DEV (Apps Script Web App, anonymous, real Sheet writes) |
-| Sprint 02 frontend                     | LIVE on GitHub Pages, with a real landing front door            |
-| Google Sheet / Apps Script config      | COMPLETE (owner-side anonymous access resolved)                 |
-| Deployment / stabilisation / visual QA | COMPLETE and verified live                                      |
-| Sprint 03                              | NOT started (locked)                                            |
+| Area                                   | Status                                                                                 |
+| -------------------------------------- | -------------------------------------------------------------------------------------- |
+| Sprint 00 Foundation                   | COMPLETE                                                                               |
+| Sprint 01 Identity & Timeline          | COMPLETE                                                                               |
+| Sprint 02 Dashboard + Vitals + Reports | COMPLETE                                                                               |
+| Sprint 02 backend                      | LIVE in DEV (Apps Script Web App, anonymous, real Sheet writes)                        |
+| Sprint 02 frontend                     | LIVE on GitHub Pages, with a real landing front door                                   |
+| Google Sheet / Apps Script config      | COMPLETE (owner-side anonymous access resolved)                                        |
+| Deployment / stabilisation / visual QA | COMPLETE and verified live                                                             |
+| Sprint 03                              | NOT started (locked) — only the pre-existing planning spec `208-SPRINT_03.md`; no code |
 
 ## 2. Key facts
 
-| Item                         | Value                                                                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Default branch HEAD (`main`) | `82346ef` (fast-forward merge of `claude/elegant-babbage-kuqfbq`; no divergence)                                   |
-| Stabilisation commits        | `920d56d` entry-point CTAs · `8b9c741` landing redesign · `31c67d4` e2e hydration fix · `82346ef` gitignore chore  |
-| Release tag                  | `v1.4.0-sprint-02`                                                                                                 |
-| **Live website URL**         | `https://ihkarise.github.io/Wise-Bloom-Care/`                                                                      |
-| Base path                    | `/Wise-Bloom-Care/` (Astro `base`; internal links via `withBase`)                                                  |
-| **Apps Script DEV `/exec`**  | `https://script.google.com/macros/s/AKfycbxGTss7Hpkul4y299TGsTxQj2F26k2DhbHOp9TdvzrLwZJ9b183b5HOUtq6Iu700Cpx/exec` |
-| `PUBLIC_API_BASE_URL`        | Baked at build time in `deploy-pages.yml` to the `/exec` above (public config, not a secret)                       |
-| Test count                   | **227** (web 50 · backend 163 · lint-rules 9 · cross-app 5)                                                        |
+| Item                         | Value                                                                                                                      |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Default branch HEAD (`main`) | latest on `main` = the commit carrying this report (fast-forward of `claude/elegant-babbage-kuqfbq`, no divergence)        |
+| Stabilisation commits        | `920d56d` entry-point CTAs · `8b9c741` landing redesign · `31c67d4` e2e hydration fix · `82346ef` gitignore chore · report |
+| Release tag                  | `v1.4.0-sprint-02`                                                                                                         |
+| **Live website URL**         | `https://ihkarise.github.io/Wise-Bloom-Care/`                                                                              |
+| Base path                    | `/Wise-Bloom-Care/` (Astro `base`; internal links via `withBase`)                                                          |
+| **Apps Script DEV `/exec`**  | `https://script.google.com/macros/s/AKfycbxGTss7Hpkul4y299TGsTxQj2F26k2DhbHOp9TdvzrLwZJ9b183b5HOUtq6Iu700Cpx/exec`         |
+| `PUBLIC_API_BASE_URL`        | Baked at build time in `deploy-pages.yml` to the `/exec` above (public config, not a secret)                               |
+| Test count                   | **227** (web 50 · backend 163 · lint-rules 9 · cross-app 5)                                                                |
 
 ## 3. Deployment workflow results
 
