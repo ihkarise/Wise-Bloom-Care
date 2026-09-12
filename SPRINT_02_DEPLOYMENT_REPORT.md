@@ -45,7 +45,7 @@ Every fact below is tied to a named workflow run, commit, or command output.
 | ------------------------------ | ----------------------------- | ---------------------------------------------------------------- |
 | Deploy (dev) — backend (clasp) | #11 `33980627058` @ `d097be1` | **success** — bundled GAS (`doGet`/`doPost`), `ANYONE_ANONYMOUS` |
 | Deploy Pages — frontend        | #6 `34637658517` @ `8b9c741`  | **success** — redesigned landing published to Pages              |
-| E2E (staging smoke) — live     | #14 `34638654202` @ `31c67d4` | **success** — 19/19, first attempt, no retry (see §6)            |
+| E2E (staging smoke) — live     | #15 `34672308541` @ `b9a9f62` | **success** — 19/19, first attempt, no retry (see §6)            |
 
 ## 4. Deployment architecture
 
@@ -92,9 +92,10 @@ page.
 - **Harness:** `e2e/sprint02.spec.ts` — 19 `test.step` checks, real Chromium on a
   GitHub Actions runner (which reaches `github.io` and `script.google.com`),
   against the **deployed** system. No localhost, no mocks, synthetic data only.
-- **Result:** run **#14** (`34638654202`, `main` @ `31c67d4`, 2026-09-11 19:26
-  UTC) — **success, 19/19 on the first attempt, no retry** (failure-only trace
-  artifacts absent; report 185 KB).
+- **Result:** run **#15** (`34672308541`, `main` @ `b9a9f62`, 2026-09-12 04:12
+  UTC) — **success, 19/19 on the first attempt, no retry** (single 185 KB HTML
+  report; no failure/trace artifacts). Re-confirms the earlier clean pass **#14**
+  (`34638654202` @ `31c67d4`) against the same live `8b9c741` build.
 - **Verified live:** landing loads and offers entry links → login/register routes
   → **registration (real Sheet write)** → login in a second browser context →
   authenticated app shell → family/maternal record resolves → timeline empty
@@ -112,8 +113,17 @@ page.
   dynamic import hydrated, so an empty field reached the backend. Fixed in
   `31c67d4` by waiting for network idle (island hydrated) before typing and
   asserting each value stuck — a strengthening, no assertion weakened, no product
-  change. Confirmed by the clean #14 pass. (A human typing over several seconds
-  never hits this; only an instant programmatic fill did.)
+  change. Confirmed by the clean **#14** and **#15** passes. (A human typing over
+  several seconds never hits this; only an instant programmatic fill did.)
+
+**Failures encountered & how they were resolved (this stabilisation pass):**
+
+1. Landing was a dead-end shell with no way in → entry CTAs added (`920d56d`),
+   then the landing redesigned into a real front door (`8b9c741`).
+2. Live E2E #13 (auto-run after the redesign deploy) failed at the login step
+   with `validation_failed` — a submit-before-hydrate race in the test → fixed
+   by waiting for island hydration before typing (`31c67d4`); re-verified green
+   by #14 and #15. No product or architecture change; no test weakened.
 
 ## 7. Visual QA result
 
