@@ -23,6 +23,7 @@ import type {
   ISODateTime,
   MaternalProfile,
   MaternalRecord,
+  Medicine,
   Milestone,
   Parity,
   PregnancyEpisode,
@@ -191,6 +192,24 @@ export const ENDPOINTS = [
     method: 'POST',
     path: '/v1/appointments/status',
     purpose: 'update an appointment’s status (record a visit outcome)',
+    write: true,
+  },
+  {
+    method: 'GET',
+    path: '/v1/medicines',
+    purpose: 'list the medicines a mother is taking',
+    write: false,
+  },
+  {
+    method: 'POST',
+    path: '/v1/medicines',
+    purpose: 'add a medicine the mother is taking (record-only; never prescribes)',
+    write: true,
+  },
+  {
+    method: 'POST',
+    path: '/v1/medicines/update',
+    purpose: 'edit a medicine or stop/restart it (active); never hard-deletes',
     write: true,
   },
   {
@@ -365,6 +384,57 @@ export interface UpdateAppointmentStatusRequest {
 /** `POST /v1/appointments/status` → the updated appointment. */
 export interface UpdateAppointmentStatusResponse {
   appointment: Appointment;
+}
+
+// ---------------------------------------------------------------------------
+// Medicines (docs/06-Modules/85, docs/08-Timeline/110, docs/20-Implementation/208)
+// ---------------------------------------------------------------------------
+
+/** `GET /v1/medicines` → the mother's medicines (active and stopped). */
+export type MedicineListResponse = Paginated<Medicine>;
+
+/**
+ * `POST /v1/medicines` request — record a medicine/supplement the mother is
+ * taking (as directed by her clinician). The app **records and reminds; it
+ * never prescribes, doses, or advises** (docs/06-Modules/85 BR-1/BR-2).
+ * `schedule` is free text (e.g. "Every morning"); no structured/clock format is
+ * defined by the frozen model (docs/05-Data/72). `active` defaults to `true`.
+ * There is deliberately no `notes` field — the frozen data model omits it
+ * (docs/05-Data/54 §4, docs/06-Modules/85 §8).
+ */
+export interface AddMedicineRequest {
+  subject_id: Medicine['subject_id'];
+  name: Medicine['name'];
+  schedule: Medicine['schedule'];
+  active?: Medicine['active'];
+}
+
+/**
+ * `POST /v1/medicines` → the stored medicine plus the one `medicine` timeline
+ * event it created, keeping it on the one continuous record (docs/08-Timeline/110 §3).
+ */
+export interface AddMedicineResponse {
+  event: Event;
+  medicine: Medicine;
+}
+
+/**
+ * `POST /v1/medicines/update` request — edit a medicine's `name`/`schedule`
+ * and/or **stop or restart** it via `active`. A POST, not PATCH, because the
+ * Apps Script transport exposes only GET and POST (docs/04-Architecture/53 §4).
+ * Stopping sets `active: false`; the record and its timeline history are always
+ * kept — medicines are never hard-deleted (docs/06-Modules/85 §10, FR-4).
+ */
+export interface UpdateMedicineRequest {
+  med_id: Medicine['med_id'];
+  name?: Medicine['name'];
+  schedule?: Medicine['schedule'];
+  active?: Medicine['active'];
+}
+
+/** `POST /v1/medicines/update` → the updated medicine. */
+export interface UpdateMedicineResponse {
+  medicine: Medicine;
 }
 
 /** `GET /v1/growth?child=` → WHO growth series. */
