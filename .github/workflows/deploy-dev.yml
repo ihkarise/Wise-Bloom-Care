@@ -121,11 +121,12 @@ jobs:
 
       # `push` updates HEAD, but a Web App /exec URL serves a pinned deployment
       # version, so the pushed code is not automatically live there. List the
-      # project's deployments (JSON) and update each non-HEAD deployment to a new
-      # version cut from HEAD, so the existing /exec URL serves the current code.
-      # Best-effort: the required gate is the push above, so a refresh hiccup is a
-      # warning, not a run failure. Deployment ids are public (they appear in the
-      # /exec URL).
+      # project's deployments (JSON) and cut a new version from HEAD for each
+      # non-HEAD deployment, so the existing /exec URL serves the current code.
+      # This promotion is REQUIRED, not best-effort: if it cannot promote a
+      # deployment the step fails, so a deploy can never report success while
+      # /exec still serves stale code. Deployment ids are public (they appear in
+      # the /exec URL); the existing DEV /exec deployment id is preserved.
       - name: List + refresh dev Web App deployments
         if: ${{ env.SKIP_GAS != '1' }}
         working-directory: apps/backend
@@ -148,19 +149,32 @@ jobs:
               // A HEAD deployment has no versionNumber; it already tracks HEAD.
               if (id && versionNumber !== undefined && versionNumber !== null) ids.push(id);
             }
-            fs.writeFileSync("/tmp/dep-ids.txt", ids.join("\n"));
+            // Trailing newline so the shell `while read` loop below also processes
+            // the final id — a file with no trailing newline drops its last line.
+            fs.writeFileSync("/tmp/dep-ids.txt", ids.length ? ids.join("\n") + "\n" : "");
             console.log("Non-HEAD deployment ids to refresh:", ids.length);
           '
+          promoted=0
           if [ -s /tmp/dep-ids.txt ]; then
-            while read -r DEP_ID; do
+            # `|| [ -n "$DEP_ID" ]` also processes a final id that has no trailing
+            # newline. A promotion failure is now fatal (was a silent warning), so a
+            # deploy can never again report success while /exec still serves old code.
+            while read -r DEP_ID || [ -n "$DEP_ID" ]; do
               [ -n "$DEP_ID" ] || continue
               echo "Refreshing deployment ${DEP_ID} -> new version from HEAD…"
               npx --yes @google/clasp@3.4.1 deploy -i "$DEP_ID" -d "$DESC" \
-                || echo "::warning::Could not refresh deployment ${DEP_ID}"
+                || { echo "::error::Could not refresh deployment ${DEP_ID}"; exit 1; }
+              promoted=$((promoted + 1))
             done < /tmp/dep-ids.txt
           else
             echo "No versioned Web App deployment in this project yet — creating one from HEAD…"
-            npx --yes @google/clasp@3.4.1 deploy -d "$DESC" || echo "::warning::create-deployment failed"
+            npx --yes @google/clasp@3.4.1 deploy -d "$DESC" \
+              || { echo "::error::create-deployment failed"; exit 1; }
+            promoted=$((promoted + 1))
+          fi
+          if [ "$promoted" -eq 0 ]; then
+            echo "::error::No Web App deployment was promoted — the /exec URL would still serve stale code."
+            exit 1
           fi
           echo '== Deployments after refresh/create (the /exec URL uses the non-HEAD deploymentId) =='
           npx --yes @google/clasp@3.4.1 deployments --json | node -e '
