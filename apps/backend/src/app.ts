@@ -11,6 +11,7 @@ import { createAuthController } from './controllers/authController';
 import { createDashboardController } from './controllers/dashboardController';
 import { createFamilyController } from './controllers/familyController';
 import { createMaternalController } from './controllers/maternalController';
+import { createMedicinesController } from './controllers/medicinesController';
 import { createReportsController } from './controllers/reportsController';
 import { createTimelineController } from './controllers/timelineController';
 import { createVitalsController } from './controllers/vitalsController';
@@ -31,6 +32,7 @@ import { ContentService } from './services/ContentService';
 import { DashboardService } from './services/DashboardService';
 import { FamilyService } from './services/FamilyService';
 import { MaternalService } from './services/MaternalService';
+import { MedicinesService } from './services/MedicinesService';
 import { PregnancyService } from './services/PregnancyService';
 import { ReportsService } from './services/ReportsService';
 import { SessionService } from './services/SessionService';
@@ -69,6 +71,7 @@ export interface App {
     vitals: VitalsService;
     reports: ReportsService;
     appointments: AppointmentsService;
+    medicines: MedicinesService;
     dashboard: DashboardService;
   };
 }
@@ -94,6 +97,7 @@ export function buildApp(config: AppConfig): App {
   );
   const reports = new ReportsService(storage, timeline, new MediaService(mediaSigningSecret));
   const appointments = new AppointmentsService(storage, timeline);
+  const medicines = new MedicinesService(storage, timeline);
   const dashboard = new DashboardService({ storage, timeline, trend, maternal, pregnancy });
   const auth = new AuthService({
     storage,
@@ -130,6 +134,7 @@ export function buildApp(config: AppConfig): App {
     ...createVitalsController({ family, maternal, vitals, audit }),
     ...createReportsController({ family, maternal, reports, audit }),
     ...createAppointmentsController({ family, maternal, appointments, audit }),
+    ...createMedicinesController({ family, maternal, medicines, audit }),
     ...createDashboardController({ family, dashboard, audit }),
   };
 
@@ -155,6 +160,7 @@ export function buildApp(config: AppConfig): App {
       vitals,
       reports,
       appointments,
+      medicines,
       dashboard,
     },
   };

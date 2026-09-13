@@ -7,6 +7,7 @@
  * (docs/04-Architecture/57).
  */
 import AppointmentIsland from '../features/appointments/AppointmentIsland';
+import MedicineIsland from '../features/medicines/MedicineIsland';
 import LogoutButton from '../features/auth/LogoutButton';
 import DashboardIsland from '../features/dashboard/DashboardIsland';
 import PregnancySetupIsland from '../features/pregnancy/PregnancySetupIsland';
@@ -42,6 +43,7 @@ const base = apiBaseUrl();
       <PregnancySetupIsland client:load apiBaseUrl={base} />
       <VitalLogIsland client:load apiBaseUrl={base} />
       <AppointmentIsland client:load apiBaseUrl={base} />
+      <MedicineIsland client:load apiBaseUrl={base} />
       <ReportUploadIsland client:load apiBaseUrl={base} />
       <TimelineView client:load apiBaseUrl={base} />
     </main>

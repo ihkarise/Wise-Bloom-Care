@@ -10,7 +10,7 @@
  * Shipped-module entities each have their own file, one responsibility per
  * module: Sprint 01's users, sessions, families, maternal, pregnancyEpisodes,
  * events, audit (docs/20-Implementation/206 §4); Sprint 02's vitals and reports
- * (docs/20-Implementation/207 §4); Sprint 03's appointments
+ * (docs/20-Implementation/207 §4); Sprint 03's appointments and medicines
  * (docs/20-Implementation/208 §4). Entities not yet owned by a shipped module
  * stay inline below until their sprint gives them a dedicated file.
  */
@@ -20,6 +20,7 @@ import { AUDIT_RECORD_TABLE } from './audit';
 import { EVENT_TABLE } from './events';
 import { FAMILY_TABLE } from './families';
 import { MATERNAL_RECORD_TABLE } from './maternal';
+import { MEDICINE_TABLE } from './medicines';
 import { PREGNANCY_EPISODE_TABLE } from './pregnancyEpisodes';
 import { REPORT_TABLE } from './reports';
 import { SESSION_TABLE } from './sessions';
@@ -130,21 +131,7 @@ export const TABLES: Record<EntityName, TableMapping> = {
     foreignKeys: [],
   },
   Appointment: APPOINTMENT_TABLE,
-  Medicine: {
-    entity: 'Medicine',
-    tab: 'medicines',
-    pk: 'med_id',
-    appendOnly: false,
-    immutableFields: [],
-    fields: [
-      f('med_id', 'string'),
-      f('subject_id', 'string'),
-      f('name', 'string'),
-      f('schedule', 'string'),
-      f('active', 'boolean'),
-    ],
-    foreignKeys: [],
-  },
+  Medicine: MEDICINE_TABLE,
   CaregiverAccess: {
     entity: 'CaregiverAccess',
     tab: 'caregiver_access',
