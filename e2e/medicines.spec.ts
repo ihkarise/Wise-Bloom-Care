@@ -162,8 +162,12 @@ test('Medicines staging smoke — live frontend -> /exec -> Sheet', async ({ pag
 
   await test.step('5. edit the medicine schedule (versioned update)', async () => {
     await row().getByRole('button', { name: 'Edit' }).click();
-    await fillField(row().getByLabel('Schedule'), MED.schedule2);
-    await row().getByRole('button', { name: 'Save changes' }).click();
+    // In edit mode the medicine name becomes an <input value> rather than visible
+    // text, so the hasText row() locator no longer matches. Locate the edit form by
+    // its (unchanged) name field's value instead — we only change the schedule.
+    const editForm = page.getByRole('listitem').filter({ has: page.getByDisplayValue(MED.name) });
+    await fillField(editForm.getByLabel('Schedule'), MED.schedule2);
+    await editForm.getByRole('button', { name: 'Save changes' }).click();
     await expect(row().getByText(MED.schedule2)).toBeVisible({ timeout: 60_000 });
   });
 
