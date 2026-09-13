@@ -127,8 +127,22 @@ test('Medicines staging smoke — live frontend -> /exec -> Sheet', async ({ pag
     const addForm = page.getByRole('form', { name: 'Add a medicine' });
     await fillField(addForm.getByLabel('Medicine name'), MED.name);
     await fillField(addForm.getByLabel('Schedule'), MED.schedule);
-    await addForm.getByRole('button', { name: 'Add medicine' }).click();
-    await expect(page.getByText(MED.name)).toBeVisible({ timeout: 60_000 });
+    const addBtn = addForm.getByRole('button', { name: 'Add medicine' });
+    // The button enables once the mother's record has resolved (subjectReady)
+    // and both fields are non-empty; wait for that before clicking (GAS is slow).
+    await expect(addBtn).toBeEnabled({ timeout: 60_000 });
+    await addBtn.click();
+    // Wait for the medicine to appear OR an inline error, and fail loudly with the
+    // error text so a real backend failure is diagnosable from the job log.
+    const appeared = page.getByText(MED.name);
+    const alert = page.getByRole('alert').first();
+    await expect(appeared.or(alert)).toBeVisible({ timeout: 60_000 });
+    if (await alert.isVisible().catch(() => false)) {
+      throw new Error(
+        `Add medicine failed with an inline error: "${(await alert.innerText()).trim()}"`,
+      );
+    }
+    await expect(appeared).toBeVisible();
   });
 
   await test.step('3. medicine appears in the list as active, with its schedule', async () => {
