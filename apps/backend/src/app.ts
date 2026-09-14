@@ -8,6 +8,7 @@
 
 import { createAppointmentsController } from './controllers/appointmentsController';
 import { createAuthController } from './controllers/authController';
+import { createContentController } from './controllers/contentController';
 import { createDashboardController } from './controllers/dashboardController';
 import { createFamilyController } from './controllers/familyController';
 import { createMaternalController } from './controllers/maternalController';
@@ -33,12 +34,15 @@ import { DashboardService } from './services/DashboardService';
 import { FamilyService } from './services/FamilyService';
 import { MaternalService } from './services/MaternalService';
 import { MedicinesService } from './services/MedicinesService';
+import { PregnancyKnowledgeService } from './services/PregnancyKnowledgeService';
 import { PregnancyService } from './services/PregnancyService';
 import { ReportsService } from './services/ReportsService';
 import { SessionService } from './services/SessionService';
 import { TimelineService } from './services/TimelineService';
 import { TrendService } from './services/TrendService';
 import { VitalsService } from './services/VitalsService';
+
+import { PREGNANCY_WEEKS } from './content/pregnancyWeeks';
 
 import type { Logger } from './lib/logging';
 import type { StorageAdapter } from './adapters/StorageAdapter';
@@ -67,6 +71,7 @@ export interface App {
     pregnancy: PregnancyService;
     timeline: TimelineService;
     content: ContentService;
+    knowledge: PregnancyKnowledgeService;
     trend: TrendService;
     vitals: VitalsService;
     reports: ReportsService;
@@ -87,6 +92,7 @@ export function buildApp(config: AppConfig): App {
   const pregnancy = new PregnancyService(storage);
   const timeline = new TimelineService(storage);
   const content = new ContentService(storage);
+  const knowledge = new PregnancyKnowledgeService(PREGNANCY_WEEKS, content);
   const trend = new TrendService();
   const vitals = new VitalsService(storage, timeline, trend);
 
@@ -135,6 +141,7 @@ export function buildApp(config: AppConfig): App {
     ...createReportsController({ family, maternal, reports, audit }),
     ...createAppointmentsController({ family, maternal, appointments, audit }),
     ...createMedicinesController({ family, maternal, medicines, audit }),
+    ...createContentController({ family, maternal, pregnancy, knowledge, audit }),
     ...createDashboardController({ family, dashboard, audit }),
   };
 
@@ -156,6 +163,7 @@ export function buildApp(config: AppConfig): App {
       pregnancy,
       timeline,
       content,
+      knowledge,
       trend,
       vitals,
       reports,

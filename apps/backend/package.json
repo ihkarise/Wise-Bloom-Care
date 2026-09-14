@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit",
-    "build:gas": "node scripts/build-gas.mjs",
+    "gen:kb": "node scripts/build-kb.mjs",
+    "build:gas": "node scripts/build-kb.mjs && node scripts/build-gas.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",

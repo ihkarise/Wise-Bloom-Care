@@ -159,7 +159,13 @@ export const ENDPOINTS = [
     write: false,
   },
   { method: 'GET', path: '/v1/timeline', purpose: 'continuous timeline', write: false },
-  { method: 'GET', path: '/v1/content', purpose: 'a typed, sourced content item', write: false },
+  {
+    method: 'GET',
+    path: '/v1/content',
+    purpose:
+      'a typed, sourced content item (GA-driven week-by-week knowledge; optional week query param)',
+    write: false,
+  },
   { method: 'POST', path: '/v1/vitals', purpose: 'log a vital', write: true },
   { method: 'GET', path: '/v1/vitals', purpose: 'vital series', write: false },
   {
@@ -537,9 +543,28 @@ export interface PregnancyEpisodeResponse {
 /** `GET /v1/maternal/pregnancy-episodes` list response — each item includes its derived GA (BR-1: server-computed, never re-derived client-side, docs/04-Architecture/51 BR-3). */
 export type PregnancyEpisodeListResponse = Paginated<PregnancyEpisodeResponse>;
 
-/** `GET /v1/content` response — refuses to resolve untyped/unsourced items (docs/02-Research/28 BR-1/BR-2). */
+/**
+ * `GET /v1/content` response — refuses to resolve untyped/unsourced items
+ * (docs/02-Research/28 BR-1/BR-2). Always carries the typed+sourced `content`
+ * index; the optional fields below are populated when the item resolves to a
+ * knowledge-base entry that is surfaced to the reader (docs/07-AI/101 §7,
+ * docs/04-Architecture/56 §3 "medical content in responses is typed+sourced").
+ *
+ * For GA-driven week-by-week knowledge (MS-1.6, docs/06-Modules/82 FR-4): the
+ * server derives the current pregnancy `week` from the active episode's
+ * gestational age (or honours an explicit `week` query param, 1..40) and
+ * returns that week's authored KB `body`. Additive/backward-compatible (§9).
+ */
 export interface ContentItemResponse {
   content: ContentItem;
+  /** Human-readable title of the KB item (e.g. "Pregnancy — Week 12"). */
+  title?: string;
+  /** The authored KB content body (Markdown), surfaced typed+sourced (docs/07-AI/101 §7). */
+  body?: string;
+  /** GA-driven week knowledge: the resolved pregnancy week, 1..40 (docs/06-Modules/82 FR-4). */
+  week?: number;
+  /** Server-computed gestational age for display; `null` when LMP is unknown (docs/06-Modules/82 BR-1). */
+  gestational_age?: GestationalAgeView | null;
 }
 
 /** Re-exported for convenience where callers only need the maternal profile shape. */

@@ -11,6 +11,7 @@ import MedicineIsland from '../features/medicines/MedicineIsland';
 import LogoutButton from '../features/auth/LogoutButton';
 import DashboardIsland from '../features/dashboard/DashboardIsland';
 import PregnancySetupIsland from '../features/pregnancy/PregnancySetupIsland';
+import WeekKnowledgeCard from '../features/pregnancy/WeekKnowledgeCard';
 import ReportUploadIsland from '../features/reports/ReportUploadIsland';
 import TimelineView from '../features/timeline/TimelineView';
 import VitalLogIsland from '../features/vitals/VitalLogIsland';
@@ -41,6 +42,7 @@ const base = apiBaseUrl();
 
       <DashboardIsland client:load apiBaseUrl={base} />
       <PregnancySetupIsland client:load apiBaseUrl={base} />
+      <WeekKnowledgeCard client:load apiBaseUrl={base} />
       <VitalLogIsland client:load apiBaseUrl={base} />
       <AppointmentIsland client:load apiBaseUrl={base} />
       <MedicineIsland client:load apiBaseUrl={base} />
