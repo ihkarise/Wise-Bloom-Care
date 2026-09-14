@@ -56,6 +56,18 @@ export class ContentService {
     return this.storage.create('ContentItem', item);
   }
 
+  /**
+   * Validates an already-loaded content item (e.g. a knowledge-base–sourced
+   * week item that does not live in storage) is validly typed and sourced
+   * before it is served — the same gate as {@link get}, applied on read to
+   * content that reaches the service from the bundled KB (docs/02-Research/28
+   * BR-1/BR-2, docs/06-Modules/82 §6). Throws `UntypedContentError` otherwise.
+   */
+  assertServable(item: ContentItem): ContentItem {
+    this.assertTyped(item);
+    return item;
+  }
+
   /** Resolves one content item by id — refuses to serve it if it is not validly typed and sourced. */
   get(contentId: UUID): ContentItem {
     const item = this.storage.get('ContentItem', contentId);

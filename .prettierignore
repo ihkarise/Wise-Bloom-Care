@@ -17,3 +17,7 @@ IMPLEMENTATION_READINESS_REPORT.md
 
 # Standalone Playwright E2E (installs its own deps in CI; not a workspace member)
 e2e/
+
+# Generated verbatim from knowledge-base/ by apps/backend/scripts/build-kb.mjs;
+# the KB is the source of truth (a drift test guards it) — not hand-formatted.
+apps/backend/src/content/pregnancy-weeks.generated.json
