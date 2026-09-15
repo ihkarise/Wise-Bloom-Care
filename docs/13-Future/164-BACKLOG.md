@@ -43,6 +43,7 @@ Each item: `id`, title, linked FR/module/doc, tier (v1/v2/v3), priority, status 
 | Journal, feeding/sleep | FR-20/21, `93`/`89` | v1 |
 | Settings, notifications, export | FR-23/24/27, `97`/`95`/`76` | v1 |
 | v1 hardening (a11y, security, backups) | NFRs | v1 |
+| **Personal wellness tracking (MS-1.10, proposed)** — sequenced strictly **after** MS-1.7 Delivery Keystone; does not gate v1.0 ship | `docs/06-Modules/98-WELLNESS_TRACKING_MODULE.md`, `docs/ADR/ADR-007-Personal-Tracker-Timeline-Strategy.md`, `docs/03-UX/42-WELLNESS_TRACKER_SPEC.md` | v1 (additive, non-blocking) |
 
 ### 4.3 Phase 2+ (queued)
 | Item | Linked | Tier |
@@ -57,6 +58,7 @@ Each item: `id`, title, linked FR/module/doc, tier (v1/v2/v3), priority, status 
 - Continuity (keystone delivery transition) and V1 "Must" FRs first (`docs/01-Product/16`).
 - Safety gates precede AI (guardrails before `94`).
 - Migration precedes ecosystem (before `161`).
+- Personal wellness tracking (MS-1.10, proposed) is additive/non-blocking and queued strictly behind MS-1.7 Delivery Keystone; it must not preempt or delay it (`docs/01-Product/15-MILESTONES.md` BR-5).
 
 ## 6. Business Rules
 - BR-1 Backlog items trace to an FR/module/doc and a tier.
@@ -74,6 +76,7 @@ Each item: `id`, title, linked FR/module/doc, tier (v1/v2/v3), priority, status 
 ## 9. Open Questions
 - OQ-1 Caregiver-sharing tier.
 - OQ-2 Execution tooling for backlog (issue tracker).
+- OQ-3 Whether MS-1.10 (personal wellness tracking) is pulled into v1 Beta or scheduled as a v1 fast-follow after Production — see `docs/01-Product/15-MILESTONES.md` OQ-3.
 
 ## 10. Risks
 - R-1 Backlog drifting from matrix/roadmap. Mitigation: BR-1/BR-2 traceability + sequencing.

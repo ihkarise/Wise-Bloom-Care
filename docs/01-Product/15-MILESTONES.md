@@ -39,6 +39,7 @@ Defines the concrete, verifiable milestones that mark progress through the roadm
 | MS-1.7 | **Delivery transition** | delivery event auto-creates linked baby profile; 0 duplicates; loss path works |
 | MS-1.8 | Baby core (growth/milestones/vaccination) | WHO charts render; CDC milestones & vaccine reminders work |
 | MS-1.9 | v1 hardening | WCAG 2.2 AA core flows; security baseline; backups verified |
+| MS-1.10 | **Personal wellness tracking** (proposed — Phase 0; not yet ratified) | mother can choose/activate curated trackers; one-tap recording; deactivate preserves history; reactivate restores it; RBAC/audit reused unchanged; see `docs/06-Modules/98-WELLNESS_TRACKING_MODULE.md` |
 
 ### Phase 2 — Assistance & Insight (v2)
 | ID | Milestone | Exit gate |
@@ -62,6 +63,7 @@ Defines the concrete, verifiable milestones that mark progress through the roadm
 - BR-2: MS-1.7 (delivery transition) is the keystone of v1; v1 cannot ship without it.
 - BR-3: MS-2.1 (guardrails) blocks all AI-exposing milestones.
 - BR-4: MS-3.1 (migration) blocks ecosystem-scale milestones.
+- BR-5: MS-1.10 (personal wellness tracking) is additive and does **not** gate the v1.0 ship gate (§4/§8 of `16-RELEASE_PLAN.md` remain defined solely by MS-1.7 + MS-1.9); it is sequenced strictly after MS-1.7 and must not preempt it, and remains **proposed** (Phase 0 spec/ADR/backlog only — `docs/06-Modules/98-WELLNESS_TRACKING_MODULE.md`, `docs/ADR/ADR-007-Personal-Tracker-Timeline-Strategy.md`) until separately ratified and until implementation is separately authorised.
 
 ## 4. Acceptance Criteria
 
@@ -71,7 +73,7 @@ Defines the concrete, verifiable milestones that mark progress through the roadm
 
 ## 5. Future Expansion
 
-Phase 4 milestones (additional life stages) append as that phase is scoped.
+Phase 4 milestones (additional life stages) append as that phase is scoped. MS-1.10 (§2, proposed) is the first instance of a milestone appended ahead of its own ratification, per Phase 0 governance review (`docs/06-Modules/98-WELLNESS_TRACKING_MODULE.md`).
 
 ## 6. Dependencies
 
@@ -81,6 +83,7 @@ Phase 4 milestones (additional life stages) append as that phase is scoped.
 
 - OQ-1: Target dates per milestone (pending capacity).
 - OQ-2: Whether MS-2.4 (sharing) is pulled into Phase 1.
+- OQ-3: Whether MS-1.10 (personal wellness tracking, proposed) ships before or after v1.0 Production, given BR-5 — a scheduling decision, not an architectural one.
 
 ## 8. Risks
 

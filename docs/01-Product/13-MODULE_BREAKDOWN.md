@@ -53,6 +53,13 @@ Modules are grouped by layer of concern. Each module has: a single responsibilit
 |---|---|---|---|
 | AI Assistant | Explain, educate, summarise, surface trends/missing data | (reads; owns AI logs) | `94-AI_MODULE.md`, `docs/07-AI/*` |
 
+### 2.5 Personal wellness module (proposed — Phase 0, not yet implemented)
+| Module | Responsibility | Owns | Spec |
+|---|---|---|---|
+| Wellness Tracking (Personal Tracker) | Customisable, mother-chosen personal observation tracking (e.g., movement, mood, sleep) from a curated template catalog — records only, never diagnoses | `TrackerPreference`, `TrackerEntry` | `98-WELLNESS_TRACKING_MODULE.md` (proposed; see `docs/ADR/ADR-007-Personal-Tracker-Timeline-Strategy.md`, `docs/01-Product/15-MILESTONES.md` MS-1.10 proposed, `docs/13-Future/164-BACKLOG.md`) |
+
+This entry registers the module per BR-4 below so its spec (`98`) may exist ahead of implementation; it does **not** authorise implementation. Sequenced strictly after MS-1.7 (`15-MILESTONES.md`) and does not gate the v1.0 ship gate.
+
 ## 3. Module Design Rules
 
 - **Single responsibility:** each module owns exactly one data domain; cross-module reads go through the API/service layer, never by reaching into another module's storage.
@@ -92,7 +99,7 @@ Each fact has one owning module. Derived values (e.g., gestational age, weight-g
 
 ## 8. Future Expansion
 
-Future modules: Prediction/Analytics (elevated), Clinician Portal, Offline Sync, Device Integration. Each will be added with responsibility, owned data, and a spec doc.
+Future modules: Prediction/Analytics (elevated), Clinician Portal, Offline Sync, Device Integration. Each will be added with responsibility, owned data, and a spec doc. Wellness Tracking (§2.5) is the first module registered under this rule ahead of its implementation — a future Mother Health → Wellness IA placement is deferred to that later review (`docs/03-UX/32-INFORMATION_ARCHITECTURE.md`).
 
 ## 9. Dependencies
 
