@@ -24,6 +24,8 @@ import { MEDICINE_TABLE } from './medicines';
 import { PREGNANCY_EPISODE_TABLE } from './pregnancyEpisodes';
 import { REPORT_TABLE } from './reports';
 import { SESSION_TABLE } from './sessions';
+import { TRACKER_ENTRY_TABLE } from './trackerEntries';
+import { TRACKER_PREFERENCE_TABLE } from './trackerPreferences';
 import { f, type TableMapping } from './types';
 import { USER_TABLE } from './users';
 import { VITAL_TABLE } from './vitals';
@@ -132,6 +134,8 @@ export const TABLES: Record<EntityName, TableMapping> = {
   },
   Appointment: APPOINTMENT_TABLE,
   Medicine: MEDICINE_TABLE,
+  TrackerPreference: TRACKER_PREFERENCE_TABLE,
+  TrackerEntry: TRACKER_ENTRY_TABLE,
   CaregiverAccess: {
     entity: 'CaregiverAccess',
     tab: 'caregiver_access',

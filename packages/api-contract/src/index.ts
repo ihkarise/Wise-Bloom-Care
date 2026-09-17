@@ -30,6 +30,8 @@ import type {
   Report,
   Role,
   Session,
+  TrackerEntry,
+  TrackerPreference,
   TrendResult,
   UUID,
   UserStatus,
@@ -100,6 +102,7 @@ export const RESOURCES = [
   'vitals',
   'appointments',
   'medicines',
+  'tracking',
   'reports',
   'delivery',
   'growth',
@@ -216,6 +219,31 @@ export const ENDPOINTS = [
     method: 'POST',
     path: '/v1/medicines/update',
     purpose: 'edit a medicine or stop/restart it (active); never hard-deletes',
+    write: true,
+  },
+  {
+    method: 'GET',
+    path: '/v1/tracking/preferences',
+    purpose:
+      'the mother’s tracker choices (active and inactive), plus read-only pregnancy-week context',
+    write: false,
+  },
+  {
+    method: 'POST',
+    path: '/v1/tracking/preferences',
+    purpose: 'activate or deactivate a curated tracker (reactivating reuses the same row)',
+    write: true,
+  },
+  {
+    method: 'GET',
+    path: '/v1/tracking/entries',
+    purpose: 'one tracker’s recorded history (tracker_key query param), newest first',
+    write: false,
+  },
+  {
+    method: 'POST',
+    path: '/v1/tracking/entries',
+    purpose: 'record an observation; append-only and never enters the shared timeline (ADR-007)',
     write: true,
   },
   {
@@ -441,6 +469,68 @@ export interface UpdateMedicineRequest {
 /** `POST /v1/medicines/update` → the updated medicine. */
 export interface UpdateMedicineResponse {
   medicine: Medicine;
+}
+
+// ---------------------------------------------------------------------------
+// Personal Wellness Tracker (docs/06-Modules/98, ADR-007). Maternal-subject
+// only; never enters the shared Event timeline (ADR-007, Accepted).
+// ---------------------------------------------------------------------------
+
+/**
+ * `GET /v1/tracking/preferences` → the mother's tracker choices, active and
+ * inactive (deactivating never removes the row — docs/06-Modules/98 BR-3),
+ * plus the same read-only, server-computed pregnancy-week context
+ * `WeekKnowledgeCard`/`ContentItemResponse` already expose — never
+ * recomputed or persisted here (98 §11).
+ */
+export interface TrackerPreferenceListResponse {
+  items: TrackerPreference[];
+  gestational_age: GestationalAgeView | null;
+}
+
+/**
+ * `POST /v1/tracking/preferences` request — activate or deactivate a curated
+ * tracker template. The first call for a (`subject_id`, `tracker_key`) pair
+ * creates the preference row; every later call for the same pair updates
+ * that same row's `active` in place — reactivating never creates a duplicate
+ * (docs/06-Modules/98 §9, Phase 1 D-3).
+ */
+export interface SetTrackerPreferenceRequest {
+  subject_id: TrackerPreference['subject_id'];
+  tracker_key: TrackerPreference['tracker_key'];
+  active: TrackerPreference['active'];
+}
+
+/** `POST /v1/tracking/preferences` → the created or updated preference row. */
+export interface SetTrackerPreferenceResponse {
+  preference: TrackerPreference;
+}
+
+/** `GET /v1/tracking/entries?tracker_key=&cursor=` → one tracker's history, newest first. */
+export type TrackerEntryListResponse = Paginated<TrackerEntry>;
+
+/**
+ * `POST /v1/tracking/entries` request — record one observation against an
+ * active tracker. `value` is validated server-side per the tracker
+ * template's `value_type` (docs/06-Modules/98 §8). Always append-only: a
+ * correction is a new entry, never an edit to a prior one (ADR-007, 98 BR-4).
+ * `recorded_at` is optional and defaults server-side to now — retrospective
+ * entry is allowed, mirroring the forgiving-entry convention used elsewhere (P9).
+ */
+export interface AddTrackerEntryRequest {
+  subject_id: TrackerEntry['subject_id'];
+  tracker_key: TrackerEntry['tracker_key'];
+  value: TrackerEntry['value'];
+  recorded_at?: TrackerEntry['recorded_at'];
+}
+
+/**
+ * `POST /v1/tracking/entries` → the created entry. Deliberately carries no
+ * `event` field — ADR-007 (Accepted): `TrackerEntry` never emits a shared
+ * `Event` row, unlike `AddMedicineResponse`/`ScheduleAppointmentResponse`.
+ */
+export interface AddTrackerEntryResponse {
+  entry: TrackerEntry;
 }
 
 /** `GET /v1/growth?child=` → WHO growth series. */
