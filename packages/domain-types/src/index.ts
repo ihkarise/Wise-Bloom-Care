@@ -105,6 +105,15 @@ export type ContentType = 'educational' | 'clinical_recommendation' | 'emergency
 export type AuditAction =
   'read' | 'create' | 'update' | 'soft_delete' | 'erase' | 'grant' | 'revoke' | 'login';
 
+/** Personal wellness tracker context — pregnancy-scoped or general (docs/06-Modules/98 §7). */
+export type TrackerContext = 'pregnancy' | 'general';
+
+/**
+ * Personal wellness tracker value shape — fixed, small set, never user-definable
+ * (docs/06-Modules/98 §8, BR-5; not a generic form builder).
+ */
+export type TrackerValueType = 'count' | 'scale' | 'boolean' | 'text';
+
 /** Actor role recorded on an audit record (docs/05-Data/75 §4). */
 export type ActorRole = Role | 'system';
 
@@ -292,6 +301,100 @@ export interface Medicine {
   active: boolean;
 }
 
+/**
+ * Which curated tracker templates a maternal subject has activated
+ * (docs/06-Modules/98 §9, Phase 1 D-3 — `98` §22). Correctable: `active` is
+ * updated in place, never versioned and never hard-deleted — matches the real
+ * `medicines`/`vitals` implementation, not the aspirational versioning
+ * document's correctable-record convention. One row per (`subject_id`,
+ * `tracker_key`); reactivating an inactive tracker flips the same row rather
+ * than creating a duplicate.
+ */
+export interface TrackerPreference {
+  tracker_pref_id: UUID;
+  subject_id: UUID;
+  tracker_key: string;
+  active: boolean;
+}
+
+/**
+ * An append-only personal wellness observation (docs/06-Modules/98 §9, §12).
+ * Deliberately does **not** participate in the shared `Event` timeline
+ * (`ADR-007`, Accepted) — its own history table only, queried by subject +
+ * tracker + date range. A correction is a new entry, never an in-place edit.
+ * `value` is a plain string, interpreted per its template's `value_type`
+ * (98 §8) — this is not a generic, user-definable field.
+ */
+export interface TrackerEntry {
+  tracker_entry_id: UUID;
+  subject_id: UUID;
+  tracker_key: string;
+  value: string;
+  recorded_at: ISODateTime;
+  version: number;
+  created_by: UUID;
+}
+
+/**
+ * A curated tracker template (docs/06-Modules/98 §7, §10). Code-defined, not a
+ * database table — extending the catalog is a code change, never a schema
+ * change. `scaleMax` is present only for `value_type: 'scale'` templates and
+ * defines the fixed 1..scaleMax range (not user-configurable).
+ */
+export interface TrackerTemplate {
+  tracker_key: string;
+  label: string;
+  value_type: TrackerValueType;
+  context: TrackerContext;
+  scaleMax?: number;
+}
+
+/**
+ * The v1 launch catalog (docs/06-Modules/98 §22 D-4, ratified 2026-09-17).
+ * Illustrative and expandable — new templates append here without touching
+ * `TrackerPreference`/`TrackerEntry` or the UI shell (98 §10). Not a frozen
+ * or exhaustive list.
+ */
+export const TRACKER_TEMPLATES: readonly TrackerTemplate[] = [
+  {
+    tracker_key: 'baby_movement',
+    label: 'Baby movement / kicking',
+    value_type: 'count',
+    context: 'pregnancy',
+  },
+  {
+    tracker_key: 'bloating',
+    label: 'Bloating',
+    value_type: 'scale',
+    context: 'pregnancy',
+    scaleMax: 5,
+  },
+  { tracker_key: 'vomiting', label: 'Vomiting', value_type: 'count', context: 'pregnancy' },
+  { tracker_key: 'diarrhea', label: 'Diarrhea', value_type: 'count', context: 'pregnancy' },
+  {
+    tracker_key: 'appetite',
+    label: 'Appetite',
+    value_type: 'scale',
+    context: 'general',
+    scaleMax: 5,
+  },
+  {
+    tracker_key: 'sleep_quality',
+    label: 'Sleep quality',
+    value_type: 'scale',
+    context: 'general',
+    scaleMax: 5,
+  },
+  {
+    tracker_key: 'pain_discomfort',
+    label: 'Pain / discomfort',
+    value_type: 'scale',
+    context: 'general',
+    scaleMax: 5,
+  },
+  { tracker_key: 'mood', label: 'Mood', value_type: 'scale', context: 'general', scaleMax: 5 },
+] as const;
+
 /** RBAC caregiver grant (docs/05-Data/70 §CaregiverAccess). */
 export interface CaregiverAccess {
   grant_id: UUID;
@@ -458,6 +561,8 @@ export interface DomainEntities {
   JournalEntry: JournalEntry;
   Appointment: Appointment;
   Medicine: Medicine;
+  TrackerPreference: TrackerPreference;
+  TrackerEntry: TrackerEntry;
   CaregiverAccess: CaregiverAccess;
   AuditRecord: AuditRecord;
   ContentItem: ContentItem;

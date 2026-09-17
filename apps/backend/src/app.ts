@@ -15,6 +15,7 @@ import { createMaternalController } from './controllers/maternalController';
 import { createMedicinesController } from './controllers/medicinesController';
 import { createReportsController } from './controllers/reportsController';
 import { createTimelineController } from './controllers/timelineController';
+import { createTrackingController } from './controllers/trackingController';
 import { createVitalsController } from './controllers/vitalsController';
 import {
   createRouter,
@@ -39,6 +40,7 @@ import { PregnancyService } from './services/PregnancyService';
 import { ReportsService } from './services/ReportsService';
 import { SessionService } from './services/SessionService';
 import { TimelineService } from './services/TimelineService';
+import { TrackingService } from './services/TrackingService';
 import { TrendService } from './services/TrendService';
 import { VitalsService } from './services/VitalsService';
 
@@ -77,6 +79,7 @@ export interface App {
     reports: ReportsService;
     appointments: AppointmentsService;
     medicines: MedicinesService;
+    tracking: TrackingService;
     dashboard: DashboardService;
   };
 }
@@ -104,6 +107,9 @@ export function buildApp(config: AppConfig): App {
   const reports = new ReportsService(storage, timeline, new MediaService(mediaSigningSecret));
   const appointments = new AppointmentsService(storage, timeline);
   const medicines = new MedicinesService(storage, timeline);
+  // No TimelineService dependency: a tracker entry never emits a shared Event
+  // row (ADR-007, Accepted) — this is a deliberate omission, not an oversight.
+  const tracking = new TrackingService(storage);
   const dashboard = new DashboardService({ storage, timeline, trend, maternal, pregnancy });
   const auth = new AuthService({
     storage,
@@ -141,6 +147,7 @@ export function buildApp(config: AppConfig): App {
     ...createReportsController({ family, maternal, reports, audit }),
     ...createAppointmentsController({ family, maternal, appointments, audit }),
     ...createMedicinesController({ family, maternal, medicines, audit }),
+    ...createTrackingController({ family, maternal, pregnancy, tracking, audit }),
     ...createContentController({ family, maternal, pregnancy, knowledge, audit }),
     ...createDashboardController({ family, dashboard, audit }),
   };
@@ -169,6 +176,7 @@ export function buildApp(config: AppConfig): App {
       reports,
       appointments,
       medicines,
+      tracking,
       dashboard,
     },
   };

@@ -14,6 +14,7 @@ import PregnancySetupIsland from '../features/pregnancy/PregnancySetupIsland';
 import WeekKnowledgeCard from '../features/pregnancy/WeekKnowledgeCard';
 import ReportUploadIsland from '../features/reports/ReportUploadIsland';
 import TimelineView from '../features/timeline/TimelineView';
+import TrackingIsland from '../features/tracking/TrackingIsland';
 import VitalLogIsland from '../features/vitals/VitalLogIsland';
 import { apiBaseUrl } from '../lib/apiConfig';
 import '../styles/tokens.css';
@@ -43,6 +44,7 @@ const base = apiBaseUrl();
       <DashboardIsland client:load apiBaseUrl={base} />
       <PregnancySetupIsland client:load apiBaseUrl={base} />
       <WeekKnowledgeCard client:load apiBaseUrl={base} />
+      <TrackingIsland client:load apiBaseUrl={base} />
       <VitalLogIsland client:load apiBaseUrl={base} />
       <AppointmentIsland client:load apiBaseUrl={base} />
       <MedicineIsland client:load apiBaseUrl={base} />
