@@ -2,9 +2,9 @@
 
 | Field | Value |
 |---|---|
-| Status | Proposed (Phase 0 — pending governance approval; not yet Accepted) |
-| Date | 2026-09-15 |
-| Deciders | Principal Product Architect (Phase 0 discovery/proposal) — pending review |
+| Status | **Accepted** (Phase 1 architecture review, 2026-09-17 — ratified against the live `EventType`/`TimelineService` implementation, not just argued from principle; see `docs/06-Modules/98-WELLNESS_TRACKING_MODULE.md` §22) |
+| Date | 2026-09-15 (proposed); accepted 2026-09-17 |
+| Deciders | Principal Product Architect (Phase 0 discovery/proposal); ratified by product owner, Phase 1 review |
 | Related | `docs/06-Modules/98-WELLNESS_TRACKING_MODULE.md`, `docs/05-Data/77-VERSIONING.md` §5, `docs/01-Product/13-MODULE_BREAKDOWN.md` §3 BR-3, `packages/domain-types/src/index.ts` (`EventType`), `apps/backend/src/adapters/sheets/tables/events.ts` |
 
 ---
@@ -58,4 +58,4 @@ No safety-relevant consequence: this is a data-shape/timeline decision, not a ch
 
 ## 8. Review Trigger
 
-Before Phase 2 (backend implementation) begins — confirm this ADR is Accepted, not just Proposed. Revisit if product requests tracker activity to appear in the shared/general timeline (§4 fallback), or if `EventType` needs restructuring for unrelated reasons.
+**Confirmed Accepted at Phase 1 review (2026-09-17)**, before Phase 2 (backend implementation) begins — the precondition this section originally required. Revisit if product requests tracker activity to appear in the shared/general timeline (§4 fallback), or if `EventType` needs restructuring for unrelated reasons.

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document | Wellness Tracking Module Specification |
-| Status | **Proposed — Phase 0 governance/spec review.** Not part of the frozen `v1.0.0-Architecture` baseline. Implementation requires a separate, explicit approval beyond this document (`docs/20-Implementation/216-DEFINITION_OF_READY.md` BR-2). |
-| Version | 0.1 (Phase 0 draft) |
-| Owner | Principal Product Architect (Phase 0 discovery/proposal) |
-| Last Updated | 2026-09-15 |
+| Status | **Architecture ratified — Phase 1 review complete (2026-09-17).** Data model, timeline strategy, audit stance, and v1 catalog decided (§22). Still not part of the frozen `v1.0.0-Architecture` baseline; Phase 2 (implementation) requires a separate, explicit authorization beyond this document (`docs/20-Implementation/216-DEFINITION_OF_READY.md` BR-2). |
+| Version | 0.2 (Phase 1 ratified) |
+| Owner | Principal Product Architect (Phase 0 discovery/proposal; Phase 1 decisions recorded per product owner review) |
+| Last Updated | 2026-09-17 |
 | Related | `docs/01-Product/13-MODULE_BREAKDOWN.md`, `docs/01-Product/15-MILESTONES.md`, `docs/13-Future/164-BACKLOG.md`, `docs/ADR/ADR-007-Personal-Tracker-Timeline-Strategy.md`, `docs/06-Modules/82-PREGNANCY_MODULE.md`, `docs/06-Modules/83-VITALS_MODULE.md`, `docs/05-Data/77-VERSIONING.md`, `docs/09-Security/123-ACCESS_CONTROL.md`, `docs/05-Data/75-AUDIT_LOGS.md`, `docs/03-UX/42-WELLNESS_TRACKER_SPEC.md` |
 
 ---
@@ -86,7 +86,7 @@ A code-level `TRACKER_TEMPLATES` catalog is proposed as the *initial UX starting
 
 Two conceptual entities, shaped to match existing conventions rather than invented fresh:
 
-- **TrackerPreference** — modelled on the *correctable* pattern used by `medicines` (`apps/backend/src/adapters/sheets/tables/medicines.ts`, `appendOnly: false`): maternal-subject-owned, identifies which template it activates, carries an `active` boolean that is flipped, never deleted (turning a tracker off retains every prior `TrackerPreference`/`TrackerEntry` row — satisfies "inactive ≠ delete"). Correctable-record versioning per `docs/05-Data/77-VERSIONING.md` §4 applies if a preference needs revision.
+- **TrackerPreference** — modelled on the *correctable* pattern used by `medicines` (`apps/backend/src/adapters/sheets/tables/medicines.ts`, `appendOnly: false`): maternal-subject-owned, identifies which template it activates, carries an `active` boolean that is flipped, never deleted (turning a tracker off retains every prior `TrackerPreference`/`TrackerEntry` row — satisfies "inactive ≠ delete"). **Phase 1 decision (§22):** follows the *actual* Medicines/Vitals implementation — plain in-place update of `active`, no `version`/current-flag field — not the `docs/05-Data/77-VERSIONING.md` §4 correctable-record convention, which neither `medicines.ts` nor `vitals.ts` actually implements despite both being correctable tables.
 - **TrackerEntry** — modelled on the *append-only* pattern used by `events` (`apps/backend/src/adapters/sheets/tables/events.ts`, `docs/05-Data/77-VERSIONING.md` §5): maternal-subject-owned, references the tracker/template, carries the `value` (string, interpreted per §8), a recording timestamp, and the standard append-only/versioning fields already used elsewhere (`created_by`, `version`; correction-via-new-entry rather than in-place edit, matching `77` BR-1).
 
 Before either is frozen, Phase 1 must: confirm exact field names against `docs/05-Data/70-DATA_DICTIONARY.md`/`72-FIELD_SPECIFICATIONS.md` conventions; confirm PK/FK naming against the existing `TableMapping`/`f(...)` pattern (`apps/backend/src/adapters/sheets/tables/types.ts`); confirm whether any existing table already covers part of this need — the Journal module (`93-JOURNAL_MODULE.md`) was inspected as the closest neighbour during Phase 0 discovery and is free-text/media-oriented, not a substitute for typed, templated, repeatable observations. Child-subject ownership is explicitly excluded from `subject_id` scope in v1 (§5).
@@ -147,10 +147,10 @@ Mother Health → Wellness placement in a future IA (`docs/03-UX/32-INFORMATION_
 
 ## 20. Open Questions
 
-- OQ-1 Exact v1 launch subset of the template catalog (§7) — a product decision, not an architecture one.
-- OQ-2 Exact field names/PK-FK shape for `TrackerPreference`/`TrackerEntry` (§9) — resolved at Phase 1, against `docs/05-Data/70`/`72`.
-- OQ-3 Whether/how caregiver read access to tracker history is scoped, if at all, before MS-2.4.
-- OQ-4 Final milestone slot (`docs/01-Product/15-MILESTONES.md` MS-1.10, proposed) — confirm at governance review alongside this document.
+- ~~OQ-1 Exact v1 launch subset of the template catalog (§7) — a product decision, not an architecture one.~~ **Resolved at Phase 1 — see §22.**
+- ~~OQ-2 Exact field names/PK-FK shape for `TrackerPreference`/`TrackerEntry` (§9) — resolved at Phase 1, against `docs/05-Data/70`/`72`.~~ **Resolved at Phase 1 — see §22.**
+- OQ-3 Whether/how caregiver read access to tracker history is scoped, if at all, before MS-2.4. *(still open — not addressed by Phase 1)*
+- OQ-4 Final milestone slot (`docs/01-Product/15-MILESTONES.md` MS-1.10, proposed) — confirm at governance review alongside this document. *(still open — MS-1.10 remains proposed pending a separate milestone-ratification review; this document's own architecture is ratified per §22)*
 
 ## 21. Risks
 
@@ -158,3 +158,25 @@ Mother Health → Wellness placement in a future IA (`docs/03-UX/32-INFORMATION_
 - R-2 Timeline flooding from high-frequency entries. Mitigation: BR-4, `ADR-007`.
 - R-3 PHI leakage via audit/log metadata. Mitigation: BR-6, existing `AuditService` contract.
 - R-4 Perception that this module blocks or competes with MS-1.7. Mitigation: explicit sequencing in `docs/01-Product/15-MILESTONES.md` and `docs/13-Future/164-BACKLOG.md`.
+
+## 22. Phase 1 Decisions (Ratified 2026-09-17)
+
+Grounded against the live repository (`main`, then `ceefc43`) rather than assumed from this document's own proposals. Resolves OQ-1 and OQ-2 above; does not by itself authorize implementation (`13-MODULE_BREAKDOWN.md` §2.5, `docs/20-Implementation/216` BR-2 still require a separate Phase 2 authorization).
+
+- **D-1 Timeline strategy:** `ADR-007` **Accepted** (was Proposed). Verified against the live `EventType` union and `TimelineService`/`TimelineView.tsx`/`RecentTimeline.tsx` — both frontend files consume `EventType` through TypeScript-exhaustive label maps, and `TimelineService.list()`/`recent()` page at 20/5 respectively, confirming the flooding risk `ADR-007` argued from principle is real in the current implementation, not hypothetical.
+- **D-2 Audit metadata (resolves ambiguity in §14, tightens it):** confirmed as written — `TrackerPreference` writes carry `meta: { active: boolean }` only (mirrors `medicines.ts`'s existing audit calls exactly); `TrackerEntry` writes carry **no** content-bearing `meta` at all — not the tracker key, not the value. `AuditService`'s contract is not modified; this is caller discipline, same as Medicines already demonstrates.
+- **D-3 `TrackerPreference` field shape (resolves OQ-2, supersedes the `77-VERSIONING.md` §4 reference in §9):** `tracker_pref_id` (pk) · `subject_id` · `tracker_key` · `active` (boolean). Plain in-place update on `active`, no `version`/current-flag field, no hard delete — matches the actual `medicines.ts`/`vitals.ts` implementation, not the versioning document's aspirational correctable-record convention (a pre-existing documented-vs-implemented gap in the repository, not something this module introduces or is expected to fix). `TrackerEntry` keeps the append-only shape already described in §9 (`tracker_entry_id`, `subject_id`, `tracker_key`, `value`, `recorded_at`, `version`, `created_by`), mirroring `events.ts`. Exact conventions to be re-verified against `apps/backend/src/adapters/sheets/tables/types.ts` at the start of Phase 2, not assumed frozen by this paragraph.
+- **D-4 V1 launch catalog (resolves OQ-1 — supersedes §7's illustrative table as the *launch* subset only; §7's full list remains the long-run illustrative catalog):**
+
+  | Tracker | value_type | context |
+  |---|---|---|
+  | Baby movement / kicking | count | pregnancy |
+  | Bloating | scale | pregnancy |
+  | Vomiting | count | pregnancy |
+  | Diarrhea | count | pregnancy |
+  | Appetite | scale | general |
+  | Sleep quality | scale | general |
+  | Pain / discomfort | scale | general |
+  | Mood | scale | general |
+
+  Not frozen — §7's extensibility mechanism (code-defined `TRACKER_TEMPLATES` catalog, no schema change to add a template) applies to this list exactly as it does to §7's. **Flagged for Phase 2 attention, not overridden here:** this specific eight-tracker set exercises only `count` and `scale`; no launch tracker exercises `boolean` or `text`. Phase 2's test plan should still prove `boolean`/`text` handling exists and works (via test fixtures, or by adding one `boolean`/`text` tracker to the launch set), since §8's four value types are an architectural commitment independent of which templates ship first.
