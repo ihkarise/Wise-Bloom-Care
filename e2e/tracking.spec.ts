@@ -118,6 +118,14 @@ test('Wellness Tracker staging smoke — live frontend -> /exec -> Sheet', async
 
   const trackingCard = (): Locator =>
     page.locator('section[aria-labelledby="tracking-heading"]');
+  // The tracker's own row in the active list: the list item with the label AND
+  // a history toggle. The "Today" log also renders the label inside an <li>, so
+  // the label alone matches two items once an entry exists today.
+  const row = (): Locator =>
+    trackingCard()
+      .getByRole('listitem')
+      .filter({ hasText: TRACKER_LABEL })
+      .filter({ has: page.getByRole('button', { name: /history/i }) });
 
   await test.step('1. register a synthetic user (real Sheet write) and reach the tracker', async () => {
     await registerSynthetic(page);
@@ -139,15 +147,16 @@ test('Wellness Tracker staging smoke — live frontend -> /exec -> Sheet', async
   });
 
   await test.step('5. record a count observation (one tap)', async () => {
-    const row = trackingCard().locator('li', { hasText: TRACKER_LABEL });
-    await row.getByRole('button', { name: /Log another/i }).click();
-    await expect(row.getByText('1')).toBeVisible({ timeout: 60_000 });
+    await row().getByRole('button', { name: /Log another/i }).click();
+    await expect(row().getByText('1')).toBeVisible({ timeout: 60_000 });
   });
 
   await test.step('6. per-tracker history shows the recorded entry', async () => {
-    const row = trackingCard().locator('li', { hasText: TRACKER_LABEL });
-    await row.getByRole('button', { name: 'View history' }).click();
-    await expect(row.getByText('1', { exact: true })).toBeVisible({ timeout: 30_000 });
+    await row().getByRole('button', { name: 'View history' }).click();
+    // Scoped to the history list: the row's count tally also reads "1".
+    await expect(row().getByRole('list').getByText('1', { exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
   });
 
   await test.step('7. deactivate the tracker — it leaves today’s list but history is kept', async () => {
@@ -164,7 +173,7 @@ test('Wellness Tracker staging smoke — live frontend -> /exec -> Sheet', async
     await trackingCard().getByRole('button', { name: 'Choose trackers' }).click();
     await trackingCard().getByRole('switch', { name: TRACKER_LABEL }).click();
     await trackingCard().getByRole('button', { name: 'Done' }).click();
-    await expect(trackingCard().getByText(TRACKER_LABEL)).toBeVisible({ timeout: 60_000 });
+    await expect(row()).toBeVisible({ timeout: 60_000 });
   });
 
   await test.step('9. no tracker event appears on the shared timeline (ADR-007)', async () => {
@@ -175,7 +184,7 @@ test('Wellness Tracker staging smoke — live frontend -> /exec -> Sheet', async
     await page.getByRole('button', { name: /Log out/i }).click();
     await expect(page.getByRole('heading', { name: 'Log in' })).toBeVisible({ timeout: 60_000 });
     await loginSynthetic(page);
-    await expect(trackingCard().getByText(TRACKER_LABEL)).toBeVisible({ timeout: 60_000 });
+    await expect(row()).toBeVisible({ timeout: 60_000 });
   });
 
   await test.step('11. tracking endpoints reject unauthenticated access (fail closed)', async () => {
